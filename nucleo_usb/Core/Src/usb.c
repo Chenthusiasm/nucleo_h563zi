@@ -88,7 +88,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
   if(pcdHandle->Instance==USB_DRD_FS)
   {
   /* USER CODE BEGIN USB_DRD_FS_MspInit 0 */
-
+	HAL_PWREx_EnableVddUSB();
   /* USER CODE END USB_DRD_FS_MspInit 0 */
 
   /** Initializes the peripherals clock

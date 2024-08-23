@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "icache.h"
 #include "memorymap.h"
 #include "usb.h"
 #include "gpio.h"
@@ -93,9 +92,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ICACHE_Init();
+  MX_GPIO_InitUSB();
   MX_USB_PCD_Init();
   /* USER CODE BEGIN 2 */
+  //MX_GPIO_InitUSB();
   while(hUsbDeviceFS.pClassData == NULL)
   {
 	;
@@ -147,6 +147,7 @@ int main(void)
         BSP_LED_Toggle(LED_RED);
         /* ..... Perform your action ..... */
       }
+      HAL_Delay(1);
     }
     BSP_LED_Toggle(LED_GREEN);
     /* USER CODE END WHILE */
@@ -164,6 +165,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_CRSInitTypeDef RCC_CRSInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
   */
@@ -207,6 +209,21 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enable the CRS APB clock
+  */
+  __HAL_RCC_CRS_CLK_ENABLE();
+
+  /** Configures CRS
+  */
+  RCC_CRSInitStruct.Prescaler = RCC_CRS_SYNC_DIV1;
+  RCC_CRSInitStruct.Source = RCC_CRS_SYNC_SOURCE_USB;
+  RCC_CRSInitStruct.Polarity = RCC_CRS_SYNC_POLARITY_RISING;
+  RCC_CRSInitStruct.ReloadValue = __HAL_RCC_CRS_RELOADVALUE_CALCULATE(48000000,1000);
+  RCC_CRSInitStruct.ErrorLimitValue = 34;
+  RCC_CRSInitStruct.HSI48CalibrationValue = 32;
+
+  HAL_RCCEx_CRSConfig(&RCC_CRSInitStruct);
 
   /** Configure the programming delay
   */
