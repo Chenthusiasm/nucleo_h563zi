@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "icache.h"
 #include "memorymap.h"
 #include "usb.h"
 #include "gpio.h"
@@ -92,8 +93,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_GPIO_InitUSB();
   MX_USB_PCD_Init();
+  MX_ICACHE_Init();
   /* USER CODE BEGIN 2 */
   //MX_GPIO_InitUSB();
   while(hUsbDeviceFS.pClassData == NULL)
