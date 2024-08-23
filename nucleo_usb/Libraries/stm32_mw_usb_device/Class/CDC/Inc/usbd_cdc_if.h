@@ -32,8 +32,13 @@ extern "C" {
 
 extern USBD_CDC_ItfTypeDef  USBD_CDC_Template_fops;
 
+#define APP_RX_DATA_SIZE  512
+#define APP_TX_DATA_SIZE  512
+
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
+
+uint8_t USBD_CDC_Transmit(uint8_t* Buf, uint16_t Len);
 
 #ifdef __cplusplus
 }

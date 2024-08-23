@@ -22,7 +22,7 @@
 EndBSPDependencies */
 
 /* Includes ------------------------------------------------------------------*/
-#include "usbd_cdc_if_template.h"
+#include "usbd_cdc_if.h"
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -59,23 +59,39 @@ EndBSPDependencies */
   */
 
 
+/** @defgroup USBD_CDC_Private_Variables
+  * @{
+  */
+
+/**
+  * @}
+  */
+/* Create buffer for reception and transmission           */
+/* It's up to user to redefine and/or remove those define */
+/** Received data over USB are stored in this buffer      */
+uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
+/** Data to send over USB CDC are stored in this buffer   */
+uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
+extern USBD_HandleTypeDef hUsbDeviceFS;
+  
+  
 /** @defgroup USBD_CDC_Private_FunctionPrototypes
   * @{
   */
 
-static int8_t TEMPLATE_Init(void);
-static int8_t TEMPLATE_DeInit(void);
-static int8_t TEMPLATE_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length);
-static int8_t TEMPLATE_Receive(uint8_t *pbuf, uint32_t *Len);
-static int8_t TEMPLATE_TransmitCplt(uint8_t *pbuf, uint32_t *Len, uint8_t epnum);
+static int8_t USBD_CDC_Init(void);
+static int8_t USBD_CDC_DeInit(void);
+static int8_t USBD_CDC_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length);
+static int8_t USBD_CDC_Receive(uint8_t *pbuf, uint32_t *Len);
+static int8_t USBD_CDC_TransmitCplt(uint8_t *pbuf, uint32_t *Len, uint8_t epnum);
 
 USBD_CDC_ItfTypeDef USBD_CDC_Template_fops =
 {
-  TEMPLATE_Init,
-  TEMPLATE_DeInit,
-  TEMPLATE_Control,
-  TEMPLATE_Receive,
-  TEMPLATE_TransmitCplt
+  USBD_CDC_Init,
+  USBD_CDC_DeInit,
+  USBD_CDC_Control,
+  USBD_CDC_Receive,
+  USBD_CDC_TransmitCplt
 };
 
 USBD_CDC_LineCodingTypeDef linecoding =
@@ -89,26 +105,25 @@ USBD_CDC_LineCodingTypeDef linecoding =
 /* Private functions ---------------------------------------------------------*/
 
 /**
-  * @brief  TEMPLATE_Init
+  * @brief  USBD_CDC_Init
   *         Initializes the CDC media low layer
   * @param  None
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t TEMPLATE_Init(void)
+static int8_t USBD_CDC_Init(void)
 {
-  /*
-     Add your initialization code here
-  */
-  return (0);
+    USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
+    USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
+    return (0);
 }
 
 /**
-  * @brief  TEMPLATE_DeInit
+  * @brief  USBD_CDC_DeInit
   *         DeInitializes the CDC media low layer
   * @param  None
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t TEMPLATE_DeInit(void)
+static int8_t USBD_CDC_DeInit(void)
 {
   /*
      Add your deinitialization code here
@@ -118,14 +133,14 @@ static int8_t TEMPLATE_DeInit(void)
 
 
 /**
-  * @brief  TEMPLATE_Control
+  * @brief  USBD_CDC_Control
   *         Manage the CDC class requests
   * @param  Cmd: Command code
   * @param  Buf: Buffer containing command data (request parameters)
   * @param  Len: Number of data to be sent (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t TEMPLATE_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length)
+static int8_t USBD_CDC_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length)
 {
   UNUSED(length);
 
@@ -189,7 +204,7 @@ static int8_t TEMPLATE_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length)
 }
 
 /**
-  * @brief  TEMPLATE_Receive
+  * @brief  USBD_CDC_Receive
   *         Data received over USB OUT endpoint are sent over CDC interface
   *         through this function.
   *
@@ -204,16 +219,14 @@ static int8_t TEMPLATE_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t TEMPLATE_Receive(uint8_t *Buf, uint32_t *Len)
+static int8_t USBD_CDC_Receive(uint8_t *Buf, uint32_t *Len)
 {
-  UNUSED(Buf);
-  UNUSED(Len);
-
-  return (0);
+    USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+    return (USBD_OK);
 }
 
 /**
-  * @brief  TEMPLATE_TransmitCplt
+  * @brief  USBD_CDC_TransmitCplt
   *         Data transmitted callback
   *
   *         @note
@@ -224,13 +237,27 @@ static int8_t TEMPLATE_Receive(uint8_t *Buf, uint32_t *Len)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t TEMPLATE_TransmitCplt(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
+static int8_t USBD_CDC_TransmitCplt(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
 {
   UNUSED(Buf);
   UNUSED(Len);
   UNUSED(epnum);
 
   return (0);
+}
+
+
+uint8_t USBD_CDC_Transmit(uint8_t* Buf, uint16_t Len)
+{
+    uint8_t result = USBD_OK;
+    USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
+    if (hcdc->TxState != 0)
+    {
+        return USBD_BUSY;
+    }
+    USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
+    result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
+    return result;
 }
 
 /**
