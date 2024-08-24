@@ -135,18 +135,5 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 2 */
-void MX_GPIO_InitUSB(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-
-  /*Configure GPIO pins : USB */
-  GPIO_InitStruct.Pin = USB_FS_N_Pin|USB_FS_P_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF10_USB;
-  HAL_GPIO_Init(USB_FS_N_GPIO_Port, &GPIO_InitStruct);
-}
 /* USER CODE END 2 */
