@@ -23,11 +23,9 @@
 #include "usart.h"
 #include "gpio.h"
 
-#include "sys_command_line.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "sys_command_line.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
