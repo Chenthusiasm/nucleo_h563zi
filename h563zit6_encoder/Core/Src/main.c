@@ -47,8 +47,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-volatile int32_t counter2 = 0;
-volatile int32_t counter3 = 0;
+volatile int16_t counter2 = 0;
+volatile int16_t counter3 = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,8 +113,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   HAL_TIM_Base_Start(&htim7);
-  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
   //HAL_Delay(15);
   delay(40);
@@ -128,9 +128,9 @@ int main(void)
 	if (count > 100u)
 	{
       count = 0u;
-      counter2 = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
-      counter3 = (int32_t)__HAL_TIM_GET_COUNTER(&htim3);
-      printf("encoder: [2]=%ld, [3]=%ld\n", counter2, counter3);
+      counter2 = (int16_t)__HAL_TIM_GET_COUNTER(&htim2);
+      counter3 = (int16_t)__HAL_TIM_GET_COUNTER(&htim3);
+      printf("encoder: [2]=%d, [3]=%d\n", counter2, counter3);
 	}
     /* USER CODE END WHILE */
 
