@@ -47,7 +47,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+volatile int32_t counter2 = 0;
+volatile int32_t counter3 = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,7 +59,15 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+static void delay(uint16_t us)
+{
+	__HAL_TIM_SET_COUNTER(&htim7, 0);
+	uint16_t counter = 0u;
+	do
+	{
+		counter = (uint16_t)__HAL_TIM_GET_COUNTER(&htim7);
+	} while (counter < us);
+}
 /* USER CODE END 0 */
 
 /**
@@ -92,24 +101,36 @@ int main(void)
   MX_GPIO_Init();
   MX_ICACHE_Init();
   MX_USART3_UART_Init();
+  MX_TIM3_Init();
   MX_TIM2_Init();
+  MX_TIM4_Init();
+  MX_TIM7_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
   CLI_INIT(&huart3, USART3_IRQn);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_Base_Start(&htim7);
+  HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+  //HAL_Delay(15);
+  delay(40);
+  HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_1);
   uint32_t count = 0u;
   while (1)
   {
 	CLI_RUN();
 	HAL_Delay(1);
 	++count;
-	if (count > 500u)
+	if (count > 100u)
 	{
       count = 0u;
-      printf("TIM2->CNT=%lu\n", TIM2->CNT);
+      counter2 = (int32_t)__HAL_TIM_GET_COUNTER(&htim2);
+      counter3 = (int32_t)__HAL_TIM_GET_COUNTER(&htim3);
+      printf("encoder: [2]=%ld, [3]=%ld\n", counter2, counter3);
 	}
     /* USER CODE END WHILE */
 
