@@ -21,6 +21,10 @@ extern "C" {
 
 typedef struct {
     TIM_HandleTypeDef *timHandle;
+    struct {
+        GPIO_TypeDef *portHandle;
+        uint16_t pin;
+    } gpio[2];
 } Encoder;
 
 
@@ -39,8 +43,10 @@ typedef struct {
 
 /* External functions ----------------------------------------------------------------------------*/
 
-Encoder Encoder_ctor(TIM_HandleTypeDef *const timHandle, TIM_TypeDef *const timPtr);
-bool Encoder_Init(Encoder *const encoder, uint16_t maxCount);
+Encoder Encoder_ctor(TIM_HandleTypeDef *const timHandle, TIM_TypeDef *const timPtr,
+                     GPIO_TypeDef *const gpioPortHandleCh1, uint16_t gpioPinCh1,
+                     GPIO_TypeDef *const gpioPortHandleCh2, uint16_t gpioPinCh2);
+bool Encoder_Init(Encoder const *const encoder, uint16_t maxCount);
 void Encoder_Start(Encoder const *const encoder);
 void Encoder_Stop(Encoder const *const encoder);
 uint16_t Encoder_GetMaxCount(Encoder const *const encoder);
