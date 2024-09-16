@@ -1,6 +1,11 @@
 /**
- *	@file		Encoder.h
- *  @brief		Interface file for the quadrature encoder driver.
+ * @file    Encoder.h
+ * @brief   Interface file for the quadrature encoder driver.
+ * @note    The driver is reentrant from the defined structures; the driver may not be reentrant
+ *          if different instances of the structures are constructed using the same HW peripherals.
+ * @section Legal Disclaimer
+ *      ©2024 Whisker, All rights reserved. All contents of this source file and/or any other
+ *      related source files are the explicit property of Whisker. Do not distribute. Do not copy.
  */
 #ifndef ENCODER_H_
 #define ENCODER_H_
@@ -19,6 +24,17 @@ extern "C" {
 
 /* External typedef ------------------------------------------------------------------------------*/
 
+/**
+ * @struct Encoder
+ * @brief Type definition of a structure that aggregates key components needed for the Encoder to
+ *        operate.
+ * The Encoder struct consists of the key hardware peripherals that are controlled in order to
+ * produce an incremental encoder functionality. These components include the a hardware timer and
+ * two GPIO pins.
+ * @var Encoder.timHandle           Handle to the MCU Timer (TIM) peripheral.
+ * @var Encoder.gpio[n].portHandle  Handle to the MCU GPIO port periperhal for line n.
+ * @var Encoder.gpio[n].pin         Pin number on the GPIO port for line n.
+ */
 typedef struct {
     TIM_HandleTypeDef *timHandle;
     struct {
@@ -46,13 +62,13 @@ typedef struct {
 Encoder Encoder_ctor(TIM_HandleTypeDef *const timHandle, TIM_TypeDef *const timPtr,
                      GPIO_TypeDef *const gpioPortHandleCh1, uint16_t gpioPinCh1,
                      GPIO_TypeDef *const gpioPortHandleCh2, uint16_t gpioPinCh2);
-bool Encoder_Init(Encoder const *const encoder, uint16_t maxCount);
-void Encoder_Start(Encoder const *const encoder);
-void Encoder_Stop(Encoder const *const encoder);
-uint16_t Encoder_GetMaxCount(Encoder const *const encoder);
-int16_t Encoder_GetCount(Encoder const *const encoder);
-void Encoder_SetCount(Encoder const *const encoder, int16_t count);
-void Encoder_ResetCount(Encoder const *const encoder);
+bool Encoder_Init(Encoder const *const self, uint16_t maxCount, uint8_t filter);
+void Encoder_Start(Encoder const *const self);
+void Encoder_Stop(Encoder const *const self);
+uint16_t Encoder_GetMaxCount(Encoder const *const self);
+int16_t Encoder_GetCounter(Encoder const *const self);
+void Encoder_SetCounter(Encoder const *const self, int16_t count);
+void Encoder_ResetCounter(Encoder const *const self);
 
 
 #ifdef __cplusplus
