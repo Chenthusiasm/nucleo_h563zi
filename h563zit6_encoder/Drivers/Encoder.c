@@ -48,17 +48,23 @@
 static bool acquireTimerMutex(Encoder const *const self) {
 #if defined(ENCODER_H_INCLUDE_CMSIS_OS2)
     if (self->timMutexID != NULL) {
-        return (osMutexAcquire(self->timMutexID, TIM_MUTEX_TIMEOUT_TICKS) != osOK);
+        return (osMutexAcquire(self->timMutexID, TIM_MUTEX_TIMEOUT_TICKS) == osOK);
     }
 #endif /* defined(ENCODER_H_INCLUDE_CMSIS_OS2) */
     return true;
 }
 
 
+/**
+ * @brief   Wrapper function to release the HW TIM mutex.
+ * @param[in]   self    Pointer to the Encoder struct that represents the encoder instance.
+ * @return  If the mutex was successfully released, true; otherwise, false. If there's no mutex,
+ *          return true.
+ */
 static bool releaseTimerMutex(Encoder const *const self) {
 #if defined(ENCODER_H_INCLUDE_CMSIS_OS2)
     if (self->timMutexID != NULL) {
-        return (osMutexRelease(self->timMutexID) != osOK);
+        return (osMutexRelease(self->timMutexID) == osOK);
     }
 #endif /* defined(ENCODER_H_INCLUDE_CMSIS_OS2) */
     return true;
