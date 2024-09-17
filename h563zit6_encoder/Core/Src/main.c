@@ -26,6 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "Encoder.h"
 #include "sys_command_line.h"
 /* USER CODE END Includes */
 
@@ -99,7 +100,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+  Encoder encoder = Encoder_ctor(&htim2, TIM2, GPIOA, GPIO_PIN_0, GPIOA, GPIO_PIN_1);
+  Encoder_Init(&encoder, 65535u, 0u);
+  Encoder_Start(&encoder);
   uint32_t count = 0u;
   while (1)
   {
@@ -109,7 +112,7 @@ int main(void)
 	if (count > 500u)
 	{
       count = 0u;
-      printf("TIM2->CNT=%lu\n", TIM2->CNT);
+      printf("encoder.counter=%d\n", Encoder_GetCounter(&encoder));
 	}
     /* USER CODE END WHILE */
 
