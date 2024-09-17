@@ -2,7 +2,8 @@
  * @file    Encoder.h
  * @brief   Interface file for the quadrature encoder driver.
  * @note    The driver is reentrant from the defined structures; the driver may not be reentrant
- *          if different instances of the structures are constructed using the same HW peripherals.
+ *          if different instances of the structures are constructed using the same HW peripherals,
+ *          specifically timers (TIM). If .
  * @section Legal Disclaimer
  *      ©2024 Whisker, All rights reserved. All contents of this source file and/or any other
  *      related source files are the explicit property of Whisker. Do not distribute. Do not copy.
@@ -20,6 +21,12 @@ extern "C" {
 #include <stdint.h>
 
 #include "stm32h5xx_hal.h"
+#if defined(__has_include)
+    #if __has_include("cmsis_os2.h")
+        #define ENCODER_H_INCLUDE_CMSIS_OS2
+        #include "cmsis_os2.h"
+    #endif
+#endif
 
 
 /* External typedef ------------------------------------------------------------------------------*/
@@ -31,12 +38,17 @@ extern "C" {
  * The Encoder struct consists of the key hardware peripherals that are controlled in order to
  * produce an incremental encoder functionality. These components include the a hardware timer and
  * two GPIO pins.
- * @var Encoder.timHandle           Handle to the MCU Timer (TIM) peripheral.
+ * @var Encoder.timHandle           Handle of the MCU timer (TIM) peripheral.
+ * @var Encoder.timMutexID          The ID of the timer (TIM) mutex. Only available if CMSIS RTOS2
+ *                                  is enabled.
  * @var Encoder.gpio[n].portHandle  Handle to the MCU GPIO port periperhal for line n.
  * @var Encoder.gpio[n].pin         Pin number on the GPIO port for line n.
  */
 typedef struct {
     TIM_HandleTypeDef *timHandle;
+#if defined(ENCODER_H_INCLUDE_CMSIS_OS2)
+    osMutexId_t timMutexID;
+#endif /* defined(ENCODER_H_INCLUDE_CMSIS_OS2) */
     struct {
         GPIO_TypeDef *portHandle;
         uint16_t pin;
@@ -60,6 +72,9 @@ typedef struct {
 /* External functions ----------------------------------------------------------------------------*/
 
 Encoder Encoder_ctor(TIM_HandleTypeDef *const timHandle, TIM_TypeDef *const timPtr,
+#if defined(ENCODER_H_INCLUDE_CMSIS_OS2)
+                     osMutexId_t timMutexID,
+#endif /* defined(ENCODER_H_INCLUDE_CMSIS_OS2) */
                      GPIO_TypeDef *const gpioPortHandleCh1, uint16_t gpioPinCh1,
                      GPIO_TypeDef *const gpioPortHandleCh2, uint16_t gpioPinCh2);
 bool Encoder_Init(Encoder const *const self, uint16_t maxCount, uint8_t filter);

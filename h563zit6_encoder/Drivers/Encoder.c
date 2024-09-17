@@ -24,6 +24,9 @@
 /* Maximum timer filter value for the encoder. */
 #define MAX_FILTER_VALUE                (15u)
 
+/* Default timeout value in ticks to acquire the HW TIM mutex */
+#define TIM_MUTEX_TIMEOUT_TICKS         (5u)
+
 
 /* Internal macro --------------------------------------------------------------------------------*/
 
@@ -35,7 +38,33 @@
 
 
 /* Internal function prototypes ------------------------------------------------------------------*/
-#define USE_CUSTOM_HAL_INIT (true)
+
+/**
+ * @brief   Wrapper function to acquire the HW TIM mutex.
+ * @param[in]   self    Pointer to the Encoder struct that represents the encoder instance.
+ * @return  If the mutex was successfully acquired, true; otherwise, false. If there's no mutex,
+ *          return true.
+ */
+static bool acquireTimerMutex(Encoder const *const self) {
+#if defined(ENCODER_H_INCLUDE_CMSIS_OS2)
+    if (self->timMutexID != NULL) {
+        return (osMutexAcquire(self->timMutexID, TIM_MUTEX_TIMEOUT_TICKS) != osOK);
+    }
+#endif /* defined(ENCODER_H_INCLUDE_CMSIS_OS2) */
+    return true;
+}
+
+
+static bool releaseTimerMutex(Encoder const *const self) {
+#if defined(ENCODER_H_INCLUDE_CMSIS_OS2)
+    if (self->timMutexID != NULL) {
+        return (osMutexRelease(self->timMutexID) != osOK);
+    }
+#endif /* defined(ENCODER_H_INCLUDE_CMSIS_OS2) */
+    return true;
+}
+
+
 #if defined(USE_CUSTOM_HAL_INIT)
 /**
  * @brief   Configure the specific GPIO pins used for the encoder function as TIM alternate
@@ -135,6 +164,8 @@ static bool mspInit(Encoder const *const self) {
  * @brief   Constructor that initializes the parameters of the Encoder struct.
  * @param[in]   timHandle           Handle to the TIM handle used to control the encoder function.
  * @param[in]   timPtr              Pointer to the specific HW TIM registers.
+ * @param[in]   timMutexId          ID of the HW TIM mutex; can be NULL to indicate no mutex to
+ *                                  protect the TIM resource.
  * @param[in]   gpioPortHandleCh1   Handle to the GPIO port for encoder channel 1.
  * @param[in]   gpioPinCh1          Pin number for encoder channel 1.
  * @param[in]   gpioPortHandleCh2   Handle to the GPIO port for encoder channel 2.
@@ -142,6 +173,9 @@ static bool mspInit(Encoder const *const self) {
  * @return  The new Encoder struct (to be copied upon assignment).
  */
 Encoder Encoder_ctor(TIM_HandleTypeDef *const timHandle, TIM_TypeDef *const timPtr,
+#if defined(ENCODER_H_INCLUDE_CMSIS_OS2)
+                     osMutexId_t timMutexID,
+#endif /* defined(ENCODER_H_INCLUDE_CMSIS_OS2) */
                      GPIO_TypeDef *const gpioPortHandleCh1, uint16_t gpioPinCh1,
                      GPIO_TypeDef *const gpioPortHandleCh2, uint16_t gpioPinCh2) {
     assert(timHandle != NULL);
@@ -151,6 +185,9 @@ Encoder Encoder_ctor(TIM_HandleTypeDef *const timHandle, TIM_TypeDef *const timP
 
     Encoder self = {
         .timHandle = timHandle,
+#if defined(ENCODER_H_INCLUDE_CMSIS_OS2)
+        .timMutexID = timMutexID,
+#endif /* defined(ENCODER_H_INCLUDE_CMSIS_OS2) */
         .gpio = {
             [0] = {
                 .portHandle = gpioPortHandleCh1,
@@ -201,10 +238,16 @@ bool Encoder_Init(Encoder const *const self, uint16_t maxCount, uint8_t filter) 
         .IC2Prescaler = TIM_ICPSC_DIV1,
         .IC2Filter = filter,
     };
+    if (acquireTimerMutex(self) == false) {
+        releaseTimerMutex(self);
+        return false;
+    }
     if (mspInit(self) == false) {
+        releaseTimerMutex(self);
         return false;
     }
     if (HAL_TIM_Encoder_Init(self->timHandle, &sConfig) != HAL_OK) {
+        releaseTimerMutex(self);
         return false;
     }
 
@@ -214,8 +257,10 @@ bool Encoder_Init(Encoder const *const self, uint16_t maxCount, uint8_t filter) 
         .MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE
     };
     if (HAL_TIMEx_MasterConfigSynchronization(self->timHandle, &sMasterConfig) != HAL_OK) {
+        releaseTimerMutex(self);
         return false;
     }
+    releaseTimerMutex(self);
 #else
     UNUSED(self);
     UNUSED(maxCount);
@@ -232,7 +277,11 @@ bool Encoder_Init(Encoder const *const self, uint16_t maxCount, uint8_t filter) 
 void Encoder_Start(Encoder const *const self) {
     assert(self != NULL);
 
+    if (acquireTimerMutex(self) == false) {
+        return;
+    }
     HAL_TIM_Encoder_Start(self->timHandle, TIM_CHANNEL_ALL);
+    releaseTimerMutex(self);
 }
 
 
@@ -243,7 +292,11 @@ void Encoder_Start(Encoder const *const self) {
 void Encoder_Stop(Encoder const *const self) {
     assert(self != NULL);
 
+    if (acquireTimerMutex(self) == false) {
+        return;
+    }
     HAL_TIM_Encoder_Stop(self->timHandle, TIM_CHANNEL_ALL);
+    releaseTimerMutex(self);
 }
 
 
@@ -255,7 +308,11 @@ void Encoder_Stop(Encoder const *const self) {
 uint16_t Encoder_GetMaxCount(Encoder const *const self) {
     assert(self != NULL);
 
+    if (acquireTimerMutex(self) == false) {
+        return 0u;
+    }
     return self->timHandle->Init.Period;
+    releaseTimerMutex(self);
 }
 
 
@@ -272,7 +329,11 @@ uint16_t Encoder_GetMaxCount(Encoder const *const self) {
 int16_t Encoder_GetCounter(Encoder const *const self) {
     assert(self != NULL);
 
+    if (acquireTimerMutex(self) == false) {
+        return 0;
+    }
     return __HAL_TIM_GET_COUNTER(self->timHandle);
+    releaseTimerMutex(self);
 }
 
 
@@ -293,7 +354,12 @@ void Encoder_SetCounter(Encoder const *const self, int16_t count) {
     if (unsignedCount > maxCount) {
         unsignedCount = unsignedCount % maxCount;
     }
+
+    if (acquireTimerMutex(self) == false) {
+        return;
+    }
     __HAL_TIM_SET_COUNTER(self->timHandle, unsignedCount);
+    releaseTimerMutex(self);
 }
 
 
