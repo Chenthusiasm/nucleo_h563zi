@@ -34,12 +34,15 @@ static Mutex mutex1;
 
 static void initMutex(void) {
     printf("initMutex()\n");
-    mutex0 = Mutex_ctor(TestMutexHandle);
-    mutex1 = Mutex_ctor(TestMutexHandle);
+    mutex0 = Mutex_ctor(NULL);
+    mutex1 = Mutex_ctor(NULL);
+
+//    mutex0 = Mutex_ctor();
+//    mutex1 = Mutex_ctor();
 }
 
 static void printMutexAquiredState(void) {
-    printf("    mutex0=%d; mutex1=%d\n", Mutex_IsAcquired(&mutex0), Mutex_IsAcquired(&mutex1));
+    printf("    mutex0=%d; mutex1=%d\n", mutex0.acquired, mutex1.acquired);
 }
 
 
@@ -108,5 +111,9 @@ void MainAppTask_Start(void *argument) {
         printMutexAquiredState();
         osDelay(RTOSHelper_ConvertMSToTicks(FINAL_DELAY_MS));
         printf("\n");
+
+//        printf(">>> [%lu] NULL [line=%d]\n", osKernelGetTickCount(), __LINE__);
+//        result = Mutex_Acquire(NULL, MUTEX_TIMEOUT_MS);
+//        printResult("Mutex_Acquire(NULL)", result);
     }
 }

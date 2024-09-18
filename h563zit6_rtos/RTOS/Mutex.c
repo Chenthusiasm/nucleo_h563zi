@@ -78,7 +78,7 @@ bool Mutex_Init(Mutex *const self) {
 
 
 /**
- * @brief   Acquire the mutex to indicate the resource it's protecting is not available.
+ * @brief   Acquire the mutex to protect the resource it's associated with.
  * @param[in]   self        Pointer to the Mutex struct that represents the mutex instance.
  * @param[in]   timeout_ms  The timeout period in milliseconds to acquire the mutex. If 0, then no
  *                          timeout.
@@ -88,62 +88,49 @@ bool Mutex_Init(Mutex *const self) {
 bool Mutex_Acquire(Mutex *const self, uint32_t timeout_ms) {
     assert(self != NULL);
 
+#if defined(MUTEX_H_INCLUDE_CMSIS_OS2)
+    if (self->mutexID == NULL) {
+        return true;
+    }
+    osStatus_t status = osMutexAcquire(self->mutexID, RTOSHelper_ConvertMSToTicks(timeout_ms));
+    if (status != osOK) {
+        return false;
+    }
+#else
     if (self->acquired == true) {
         return false;
     }
-#if defined(MUTEX_H_INCLUDE_CMSIS_OS2)
-    if (self->mutexID != NULL) {
-        osStatus_t status = osMutexAcquire(self->mutexID, RTOSHelper_ConvertMSToTicks(timeout_ms));
-        if (status != osOK) {
-            return false;
-        }
-        self->acquired = true;
-        return true;
-    } else
+    self->acquired = true;
 #endif /* defined(MUTEX_H_INCLUDE_CMSIS_OS2) */
-    {
-        self->acquired = true;
-        return true;
-    }
+    return true;
 }
 
 
 /**
- * @brief   Release the mutex to indicate the resource it's protecting is available.
+ * @brief   Release the mutex so that the resource it's protecting is available..
  * @param[in]   self    Pointer to the Mutex struct that represents the mutex instance.
+ * @note    It's possible that two different Mutex instances consist of the same RTOS mutex handle.
+ *          In such cases, it's possible that acquiring one mutex but releasing the other mutex will
+ *          lead to the mutex being successfully released since they both use the same mutex handle.
  * @return  If the mutex was successfully released, true; otherwise, false. If there's no mutex,
  *          return true.
  */
 bool Mutex_Release(Mutex *const self) {
     assert(self != NULL);
 
+#if defined(MUTEX_H_INCLUDE_CMSIS_OS2)
+    if (self->mutexID == NULL) {
+        return true;
+    }
+    osStatus_t status = osMutexRelease(self->mutexID);
+    if (status != osOK) {
+        return false;
+    }
+#else
     if (self->acquired == false) {
         return false;
     }
-#if defined(MUTEX_H_INCLUDE_CMSIS_OS2)
-    if (self->mutexID != NULL) {
-        osStatus_t status = osMutexRelease(self->mutexID);
-        if (status != osOK) {
-            return false;
-        }
-        self->acquired = false;
-        return true;
-    } else
+    self->acquired = false;
 #endif /* defined(MUTEX_H_INCLUDE_CMSIS_OS2) */
-    {
-        self->acquired = false;
-        return true;
-    }
-}
-
-
-/**
- * @brief   Accessor to check if the mutex is currently acquired (so the resource is protected).
- * @param[in]   self    Pointer to the Mutex struct that represents the mutex instance.
- * @return  If the mutex is currently acquired, true; otherwise, false.
- */
-bool Mutex_IsAcquired(Mutex const *const self) {
-    assert(self != NULL);
-
-    return self->acquired;
+    return true;
 }

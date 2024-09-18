@@ -32,7 +32,10 @@ extern "C" {
  * @struct Mutex
  * @brief   Type definition of a structure that aggregates key components needed for the mutex to
  *          operate.
- * @var Mutex.acquired  Flag indicating if the mutex is acquired.
+ * @var Mutex.acquired  Flag indicating if the mutex is acquired. This flag is only used if no
+ *                      RTOS is enabled so there's no RTOS mutex available for use. This is a
+ *                      required parameter because standard C doesn't allow for empty struct
+ *                      definitions.
  * @var Mutex.mutexID   The ID of the mutex. Only available if CMSIS RTOS2 is enabled.
  */
 typedef struct {
@@ -68,7 +71,6 @@ Mutex Mutex_ctor(
 bool Mutex_Init(Mutex *const self);
 bool Mutex_Acquire(Mutex *const self, uint32_t timeout_ms);
 bool Mutex_Release(Mutex *const self);
-bool Mutex_IsAcquired(Mutex const *const self);
 
 
 #ifdef __cplusplus
