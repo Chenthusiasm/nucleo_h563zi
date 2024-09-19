@@ -5,6 +5,9 @@
  *          if different instances of the structures are constructed using the same HW peripherals,
  *          specifically timers (TIM). To ensure reentrancy, the Mutex module must be configured
  *          to use an RTOS mutex.
+ * @note    This driver is not fully platform since it's possible for multiple instances to be
+ *          constructed with the same TIM and channel leading to multiple instances being able to
+ *          configure the same hardware independent of each other.
  * @section Legal Disclaimer
  *      ©2024 Whisker, All rights reserved. All contents of this source file and/or any other
  *      related source files are the explicit property of Whisker. Do not distribute. Do not copy.
