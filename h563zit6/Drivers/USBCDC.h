@@ -30,7 +30,7 @@ extern "C" {
 /* External typedef ------------------------------------------------------------------------------*/
 
 /**
- * @brief   USB CDE receive callback function that is invoked when data is received over USB.
+ * @brief   USB CDC receive callback function that is invoked when data is received over USB.
  * @param[in]   buffer  Buffer of received data.
  * @param[in]   length  Number of data bytes received.
  * @return  The number of data bytes received that were processed; ideally should be equal to the
@@ -40,9 +40,9 @@ typedef uint16_t (*USBCDC_ReceiveCallback_t)(uint8_t *const buffer, uint16_t len
 
 
 /**
- * @struct  PWM
- * @brief   Type definition of a structure that aggregates key components needed for the PWM signal
- *          generation to a pin.
+ * @struct  USBCDC
+ * @brief   Type definition of a structure that aggregates key components needed for the USB CDC
+ *          function (as VCP).
  * @var USBCDC.pcdHandle        Handle of the USB PCD (peripheral control driver).
  * @var USBCDC.usbdHandle       Handle of the USB device class.
  * @var USBCDC.usbMutexPtr      Pointer to the USB Mutex.
