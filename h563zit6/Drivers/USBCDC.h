@@ -23,12 +23,18 @@ extern "C" {
 
 #include "Mutex.h"
 #include "stm32h5xx_hal.h"
+#include "usbd_cdc_if.h"
+#include "usbd_core.h"
 
 
 /* External typedef ------------------------------------------------------------------------------*/
 
 /**
- * 
+ * @brief   USB CDE receive callback function that is invoked when data is received over USB.
+ * @param[in]   buffer  Buffer of received data.
+ * @param[in]   length  Number of data bytes received.
+ * @return  The number of data bytes received that were processed; ideally should be equal to the
+ *          length parameter.
  */
 typedef uint16_t (*USBCDC_ReceiveCallback_t)(uint8_t *const buffer, uint16_t length);
 
@@ -37,13 +43,15 @@ typedef uint16_t (*USBCDC_ReceiveCallback_t)(uint8_t *const buffer, uint16_t len
  * @struct  PWM
  * @brief   Type definition of a structure that aggregates key components needed for the PWM signal
  *          generation to a pin.
- * @var USBCDC.usbHandle        Handle of the USB peripheral.
+ * @var USBCDC.pcdHandle        Handle of the USB PCD (peripheral control driver).
+ * @var USBCDC.usbdHandle       Handle of the USB device class.
  * @var USBCDC.usbMutexPtr      Pointer to the USB Mutex.
  * @var USBCDC.receiveCallback  Receive callback function.
  */
 typedef struct {
-    USB_HandleTypeDef *usbHandle;
-    Mutex* usbMutexPtr;
+    PCD_HandleTypeDef *pcdHandle;
+    USBD_HandleTypeDef *usbdHandle;
+    Mutex *usbMutexPtr;
     USBCDC_ReceiveCallback_t receiveCallback;
 } USBCDC;
 
@@ -62,8 +70,8 @@ typedef struct {
 
 /* External functions ----------------------------------------------------------------------------*/
 
-USBCDC USBCDC_ctor(USB_HandleTypeDef *const usbHandle, Mutex *const usbMutexPtr,
-                   USBCDC_ReceiveCallback_t receiveCallback);
+USBCDC USBCDC_ctor(PCD_HandleTypeDef *const pcdHandle, USBD_HandleTypeDef *const usbdHandle,
+                   Mutex *const usbMutexPtr, USBCDC_ReceiveCallback_t receiveCallback);
 bool USBCDC_Init(USBCDC const *const self);
 bool USBCDC_Transmit(USBCDC const *const self, uint8_t const *const buffer, uint16_t length);
 

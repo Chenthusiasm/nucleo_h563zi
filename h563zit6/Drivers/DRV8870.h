@@ -23,9 +23,9 @@ extern "C" {
 /* External typedef ------------------------------------------------------------------------------*/
 
 typedef enum {
-    DRV8870_ROTATION_CLOCKWISE = 0u,
-    DRV8870_ROTATION_COUNTERCLOCKWISE
-} DRV8870_Rotation_t;
+    DRV8870_DIRECTION_FORWARD = 0u,
+    DRV8870_DIRECTION_REVERSE
+} DRV8870_Direction_t;
 
 
 /**
@@ -58,10 +58,10 @@ typedef struct {
 
 DRV8870 DRV8870_ctor(PWM *const pwmPtr0, PWM *const pwmPtr1);
 bool DRV8870_Init(DRV8870 const *const self);
-void DRV8870_SetMotor(DRV8870 const *const self, DRV8870_Rotation_t rotation,
-                      uint16_t speed_tenthPct);
-void DRV8870_StopMotor(DRV8870 const *const self);
-void DRV8870_StopMotorCoast(DRV8870 const *const self);
+void DRV8870_Drive(DRV8870 const *const self, DRV8870_Direction_t rotation,
+                   uint16_t strength_tenthPct);
+void DRV8870_Brake(DRV8870 const *const self);
+void DRV8870_Coast(DRV8870 const *const self);
 
 
 #ifdef __cplusplus

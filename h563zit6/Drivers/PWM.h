@@ -51,7 +51,7 @@ typedef enum {
  */
 typedef struct {
     TIM_HandleTypeDef *timHandle;
-    Mutex* timMutexPtr;
+    Mutex *timMutexPtr;
     PWM_Channel_t channel;
 } PWM;
 
