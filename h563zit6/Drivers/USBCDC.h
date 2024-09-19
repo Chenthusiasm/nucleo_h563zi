@@ -39,6 +39,22 @@ extern "C" {
 typedef uint16_t (*USBCDC_ReceiveCallback_t)(uint8_t *const buffer, uint16_t length);
 
 
+/* Buffer defined before their usage in the USBCDC_Buffers_t definition. */
+#define USBCDC_TX_BUFFER_SIZE           (512u)
+#define USBCDC_RX_BUFFER_SIZE           (512u)
+
+
+/**
+ * @struct  USBCDC_Buffers_t
+ * @brief   Struct that contains the transmit and receive buffers used in the USB CDC library.
+ * @var USBCDC_Buffers_t.txBuffer
+ */
+typedef struct {
+    uint8_t txBuffer[USBCDC_TX_BUFFER_SIZE];
+    uint8_t rxBuffer[USBCDC_RX_BUFFER_SIZE];
+} USBCDC_Buffers_t;
+
+
 /**
  * @struct  USBCDC
  * @brief   Type definition of a structure that aggregates key components needed for the USB CDC
@@ -53,6 +69,7 @@ typedef struct {
     USBD_HandleTypeDef *usbdHandle;
     Mutex *usbMutexPtr;
     USBCDC_ReceiveCallback_t receiveCallback;
+    USBCDC_Buffers_t *buffers;
 } USBCDC;
 
 
@@ -71,7 +88,8 @@ typedef struct {
 /* External functions ----------------------------------------------------------------------------*/
 
 USBCDC USBCDC_ctor(PCD_HandleTypeDef *const pcdHandle, USBD_HandleTypeDef *const usbdHandle,
-                   Mutex *const usbMutexPtr, USBCDC_ReceiveCallback_t receiveCallback);
+                   Mutex *const usbMutexPtr, USBCDC_ReceiveCallback_t receiveCallback,
+                   USBCDC_Buffers_t *buffers);
 bool USBCDC_Init(USBCDC const *const self);
 bool USBCDC_Transmit(USBCDC const *const self, uint8_t const *const buffer, uint16_t length);
 
