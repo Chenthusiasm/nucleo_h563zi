@@ -32,8 +32,8 @@ extern "C" {
  * @brief Type definition of a structure that aggregates key components needed for the Encoder to
  *        operate.
  * The Encoder struct consists of the key hardware peripherals that are controlled in order to
- * produce an incremental encoder functionality. These components include the a hardware timer and
- * two GPIO pins.
+ * produce an incremental encoder functionality. These components include the a hardware timer and a
+ * mutex for the timer.
  * @var Encoder.timHandle           Handle of the MCU timer (TIM) peripheral.
  * @var Encoder.timMutexPtr         Pointer to the timer (TIM) Mutex.
  */
