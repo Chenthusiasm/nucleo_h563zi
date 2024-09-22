@@ -57,7 +57,7 @@ typedef enum {
 
 
 /**
- * @brief   GPIO external interrupt/event callback function.
+ * @brief   DIO external interrupt/event callback function.
  * @param[in]   transition  The type of edge transition that triggered the external interrupt.
  */
 typedef void (*DIO_EXTICallback_t)(DIO_Transition_t transition);
@@ -67,7 +67,7 @@ typedef void (*DIO_EXTICallback_t)(DIO_Transition_t transition);
  * @struct  DIO
  * @brief   Type definition of a structure that aggregates key components needed for the DIO to
  *          operate.
- * @var DIO.portHandle      Handle of the MCU timer (TIM) peripheral.
+ * @var DIO.portHandle      Handle of the MCU GPIO port peripheral.
  * @var DIO.pin             The specific pin on the GPIO port.
  * @var DIO.extiCallback    The external interrupt/event callback function to invoke when the
  *                          configured transition is externally triggered.
