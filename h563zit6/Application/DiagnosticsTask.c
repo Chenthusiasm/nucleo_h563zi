@@ -1,8 +1,8 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
 #include "app_freertos.h"
+#include "RTOS.h"
 #include "sys_command_line.h"
-#include "RTOSHelper.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -28,6 +28,6 @@
 void DiagnosticsTask_Start(void *argument) {
     for (;;) {
         CLI_RUN();
-        osDelay(RTOSHelper_ConvertMSToTicks(1u));
+        osDelay(RTOS_ConvertMSToTicks(1u));
     }
 }
