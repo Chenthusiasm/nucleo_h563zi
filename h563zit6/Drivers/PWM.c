@@ -15,9 +15,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "Helper.h"
 #include "PWM.h"
-#include "RTOSHelper.h"
-#include "stm32h5xx_hal_def.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
