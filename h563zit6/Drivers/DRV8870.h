@@ -23,22 +23,44 @@ extern "C" {
 
 /* External typedef ------------------------------------------------------------------------------*/
 
+/**
+ * @enum    DRV8870_Err_t
+ * @brief   Enumeration of the different DRV8870 motor driver function return error codes.
+ */
 typedef enum {
-    DRV8870_DIRECTION_FORWARD = 0u,
-    DRV8870_DIRECTION_REVERSE
+    DRV8870_ERR_NONE = 0u,          /*!< No error */
+    DRV8870_ERR_NULL_PARAM,         /*!< An input parameter is NULL which is invalid for that
+                                         parameter; assert checks should catch these (possibly
+                                         UNUSED) */
+    DRV8870_ERR_INVALID_PARAM,      /*!< An input parameter had an invalid value */
+    DRV8870_ERR_RESOURCE_BLOCKED,   /*!< The HW resource is currently blocked */
+    DRV8870_ERR_UNINITIALIZED,      /*!< The DRV8870 motor is not initialized */
+    DRV8870_ERR_BRAKED,             /*!< The DRV8870 motor driver has already braked (stopped) */
+} DRV8870_Err_t;
+
+/**
+ * @enum    DRV8870_Direction_t
+ * @brief   Enumeration of the different driver directions for the DRV8870 motor driver.
+ */
+typedef enum {
+    DRV8870_DIRECTION_STOPPED = 0u, /*<! Drive is stopped */
+    DRV8870_DIRECTION_FORWARD,      /*<! Forward drive direction */
+    DRV8870_DIRECTION_REVERSE,      /*<! Reverse drive direction */
 } DRV8870_Direction_t;
 
 
 /**
  * @struct  DRV8870
  * @brief   Type definition of a structure that aggregates key components needed for the DRV8870
- *          motor driver.
- * @var DRV8870.pwmPtr0 Pointer to the PWM struct representing the IN0 line.
- * @var DRV8870.pwmPtr1 Pointer to the PWM struct representing the IN1 line.
+ *          motor driver to function.
+ * @var DRV8870.pwmIN0  PWM driver struct representing the IN0 line.
+ * @var DRV8870.pwmIN1  PWM driver struct representing the IN1 line.
+ * @var DRV8870.state   The current state of the motor driver.
  */
 typedef struct {
-    PWM *pwmPtr0;
-    PWM *pwmPtr1;
+    PWM pwmIN0;
+    PWM pwmIN1;
+    uint8_t state;
 } DRV8870;
 
 
@@ -56,12 +78,12 @@ typedef struct {
 
 /* External functions ----------------------------------------------------------------------------*/
 
-DRV8870 DRV8870_ctor(PWM *const pwmPtr0, PWM *const pwmPtr1);
-bool DRV8870_Init(DRV8870 const *const self);
-void DRV8870_Drive(DRV8870 const *const self, DRV8870_Direction_t direction,
+DRV8870 DRV8870_ctor(Timer *const timerPtr, Timer_Channel_t channelIN0, Timer_Channel_t channelIN1);
+DRV8870_Err_t DRV8870_Init(DRV8870 const *const self, uint32_t pwmFrequency_hz);
+DRV8870_Err_t DRV8870_Drive(DRV8870 const *const self, DRV8870_Direction_t direction,
                    uint16_t strength_tenthPct);
-void DRV8870_Brake(DRV8870 const *const self);
-void DRV8870_Coast(DRV8870 const *const self);
+DRV8870_Err_t DRV8870_Brake(DRV8870 const *const self);
+DRV8870_Err_t DRV8870_Coast(DRV8870 const *const self);
 
 
 #ifdef __cplusplus
