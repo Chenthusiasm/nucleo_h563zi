@@ -4,8 +4,8 @@
 
 #include "app_freertos.h"
 #include "Mutex.h"
+#include "RTOS.h"
 #include "sys_command_line.h"
-#include "RTOSHelper.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -59,49 +59,49 @@ void MainAppTask_Start(void *argument) {
         bool result;
         printf(">>> [%lu] start [line=%d]\n", osKernelGetTickCount(), __LINE__);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
 
         printf(">>> [%lu] acquire mutex0 [line=%d]\n", osKernelGetTickCount(), __LINE__);
         result = Mutex_Acquire(&mutex0, MUTEX_TIMEOUT_MS);
         printResult("Mutex_Acquire(&mutex0)", result);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
 
         printf(">>> [%lu] acquire mutex0 [line=%d]\n", osKernelGetTickCount(), __LINE__);
         result = Mutex_Acquire(&mutex0, MUTEX_TIMEOUT_MS);
         printResult("Mutex_Acquire(&mutex0)", result);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
 
         printf(">>> [%lu] acquire mutex1 [line=%d]\n", osKernelGetTickCount(), __LINE__);
         result = Mutex_Acquire(&mutex1, MUTEX_TIMEOUT_MS);
         printResult("Mutex_Acquire(&mutex1)", result);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
 
         printf(">>> [%lu] release mutex0 [line=%d]\n", osKernelGetTickCount(), __LINE__);
         result = Mutex_Release(&mutex0);
         printResult("Mutex_Release(&mutex0)", result);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
 
         printf(">>> [%lu] acquire mutex1 [line=%d]\n", osKernelGetTickCount(), __LINE__);
         result = Mutex_Acquire(&mutex1, MUTEX_TIMEOUT_MS);
         printResult("Mutex_Acquire(&mutex1)", result);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
 
         printf(">>> [%lu] acquire mutex0 [line=%d]\n", osKernelGetTickCount(), __LINE__);
         result = Mutex_Acquire(&mutex0, MUTEX_TIMEOUT_MS);
         printResult("Mutex_Acquire(&mutex0)", result);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
 
         printf(">>> [%lu] acquire mutex1 [line=%d]\n", osKernelGetTickCount(), __LINE__);
         result = Mutex_Acquire(&mutex1, MUTEX_TIMEOUT_MS);
         printResult("Mutex_Acquire(&mutex1)", result);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
 
         printf(">>> [%lu] reset [line=%d]\n", osKernelGetTickCount(), __LINE__);
         result = Mutex_Release(&mutex0);
@@ -109,7 +109,7 @@ void MainAppTask_Start(void *argument) {
         result = Mutex_Release(&mutex1);
         printResult("Mutex_Release(&mutex1)", result);
         printMutexAquiredState();
-        osDelay(RTOSHelper_ConvertMSToTicks(FINAL_DELAY_MS));
+        osDelay(RTOS_ConvertMSToTicks(FINAL_DELAY_MS));
         printf("\n");
 
 //        printf(">>> [%lu] NULL [line=%d]\n", osKernelGetTickCount(), __LINE__);

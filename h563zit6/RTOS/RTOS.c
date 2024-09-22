@@ -52,7 +52,7 @@
  * @param[in]   ticks   The number of RTOS ticks.
  * @return  The equivalent milliseconds based on the number of RTOS ticks.
  */
-uint32_t RTOSHelper_ConvertTicksToMS(uint32_t ticks) {
+uint32_t RTOS_ConvertTicksToMS(uint32_t ticks) {
     uint32_t var = ticks;
 #if defined(configTICK_RATE_HZ)
     var = var * MSEC_IN_SEC / configTICK_RATE_HZ;
@@ -66,7 +66,7 @@ uint32_t RTOSHelper_ConvertTicksToMS(uint32_t ticks) {
  * @param[in]   ms  The number of milliseconds.
  * @return  The equivalent RTOS ticks based on milliseconds.
  */
-uint32_t RTOSHelper_ConvertMSToTicks(uint32_t ms) {
+uint32_t RTOS_ConvertMSToTicks(uint32_t ms) {
     uint32_t var = ms;
 #if defined(configTICK_RATE_HZ)
     var = var * configTICK_RATE_HZ / MSEC_IN_SEC;

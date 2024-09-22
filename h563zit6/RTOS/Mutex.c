@@ -11,7 +11,7 @@
 #include <assert.h>
 
 #include "Mutex.h"
-#include "RTOSHelper.h"
+#include "RTOS.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -92,7 +92,7 @@ bool Mutex_Acquire(Mutex *const self, uint32_t timeout_ms) {
     if (self->mutexID == NULL) {
         return true;
     }
-    osStatus_t status = osMutexAcquire(self->mutexID, RTOSHelper_ConvertMSToTicks(timeout_ms));
+    osStatus_t status = osMutexAcquire(self->mutexID, RTOS_ConvertMSToTicks(timeout_ms));
     if (status != osOK) {
         return false;
     }
