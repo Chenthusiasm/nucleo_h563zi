@@ -35,7 +35,8 @@ typedef enum {
     DRV8870_ERR_INVALID_PARAM,      /*!< An input parameter had an invalid value */
     DRV8870_ERR_RESOURCE_BLOCKED,   /*!< The HW resource is currently blocked */
     DRV8870_ERR_UNINITIALIZED,      /*!< The DRV8870 motor is not initialized */
-    DRV8870_ERR_BRAKED,             /*!< The DRV8870 motor driver has already braked (stopped) */
+    DRV8870_ERR_PWM_INIT,           /*!< The PWM initialization failed */
+    DRV8870_ERR_PWM_STATE,          /*!< The PWM state is invalid */
 } DRV8870_Err_t;
 
 /**
@@ -44,6 +45,7 @@ typedef enum {
  */
 typedef enum {
     DRV8870_DIRECTION_STOPPED = 0u, /*<! Drive is stopped */
+    DRV8870_DIRECTION_COAST,        /*<! Coasting stop */
     DRV8870_DIRECTION_FORWARD,      /*<! Forward drive direction */
     DRV8870_DIRECTION_REVERSE,      /*<! Reverse drive direction */
 } DRV8870_Direction_t;
@@ -79,11 +81,11 @@ typedef struct {
 /* External functions ----------------------------------------------------------------------------*/
 
 DRV8870 DRV8870_ctor(Timer *const timerPtr, Timer_Channel_t channelIN0, Timer_Channel_t channelIN1);
-DRV8870_Err_t DRV8870_Init(DRV8870 const *const self, uint32_t pwmFrequency_hz);
-DRV8870_Err_t DRV8870_Drive(DRV8870 const *const self, DRV8870_Direction_t direction,
+DRV8870_Err_t DRV8870_Init(DRV8870 *const self, uint32_t pwmFrequency_hz);
+DRV8870_Err_t DRV8870_Drive(DRV8870 *const self, DRV8870_Direction_t direction,
                    uint16_t strength_tenthPct);
-DRV8870_Err_t DRV8870_Brake(DRV8870 const *const self);
-DRV8870_Err_t DRV8870_Coast(DRV8870 const *const self);
+DRV8870_Err_t DRV8870_Brake(DRV8870 *const self);
+DRV8870_Err_t DRV8870_Coast(DRV8870 *const self);
 
 
 #ifdef __cplusplus

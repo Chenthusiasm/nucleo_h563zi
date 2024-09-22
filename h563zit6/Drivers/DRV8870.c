@@ -23,11 +23,16 @@
  */
 typedef enum {
     STATE_UNINITIALIZED = 0u,   /*!< The motor driver hasn't been initialized */
-    STATE_BRAKED,               /*!< The motor driver has stopped (braked) */
-    STATE_DRIVING,              /*!< The motor driver is running (driving)*/
+    STATE_DRIVING,              /*!< The motor driver has been initialized and driving the motor */
 } State_t;
 
 
+/**
+ * @struct  DutyCycles_t
+ * @brief   The IN0 and IN1 duty cycles and the state of the DRV8870 drive motor.
+ * @var DutyCycles_t.in0_tenthPct   The IN0 duty cycle in tenth of a percent (0.1%).
+ * @var DutyCycles_t.in1_tenthPct   The IN1 duty cycle in tenth of a percent (0.1%).
+ */
 typedef struct {
     uint16_t in0_tenthPct;
     uint16_t in1_tenthPct;
@@ -42,8 +47,11 @@ typedef struct {
 /* The maximum value for the motor drive strength in units of tenth of a percent (0.1%). */
 #define DRIVE_STRENGTH_MAX_TENTH_PCT    (1000u)
 
-/* The PWM duty cycle for a stopped (braked) motor */
+/* The PWM duty cycle for a stopped (braked) motor. */
 #define DUTY_CYCLE_STOPPED_TENTH_PCT    (1000u)
+
+/* The PWM duty cycle for the coasting stop. */
+#define DUTY_CYCLE_COAST_TENTH_PCT      (0u)
 
 
 /* Internal macro --------------------------------------------------------------------------------*/
@@ -53,6 +61,17 @@ typedef struct {
 
 
 /* Internal constants ----------------------------------------------------------------------------*/
+
+/* PWM_Err_t map to DRV8870_Err_t. */
+static const DRV8870_Err_t PWMErrMap[] = {
+    [PWM_ERR_NONE]              = DRV8870_ERR_NONE,
+    [PWM_ERR_NULL_PARAM]        = DRV8870_ERR_NULL_PARAM,
+    [PWM_ERR_INVALID_PARAM]     = DRV8870_ERR_INVALID_PARAM,
+    [PWM_ERR_RESOURCE_BLOCKED]  = DRV8870_ERR_RESOURCE_BLOCKED,
+    [PWM_ERR_UNINITIALIZED]     = DRV8870_ERR_PWM_INIT,
+    [PWM_ERR_STARTED]           = DRV8870_ERR_PWM_STATE,
+    [PWM_ERR_STOPPED]           = DRV8870_ERR_PWM_STATE,
+};
 
 
 /* Internal function prototypes ------------------------------------------------------------------*/
@@ -81,8 +100,8 @@ static uint16_t limitStrength_tenthPct(uint16_t strength_tenthPct) {
  * @param[in]   strength_tenthPct
  */
 static uint16_t convertStrengthToDutyCycle(uint16_t strength_tenthPct) {
-    strength_tenthPct = limitStrength(strengthPct);
-    return (DRIVE_STRENGTH_MAX_TENTH_PCT - strength_tenthPCT);
+    strength_tenthPct = limitStrength_tenthPct(strength_tenthPct);
+    return (DRIVE_STRENGTH_MAX_TENTH_PCT - strength_tenthPct);
 }
 
 
@@ -95,6 +114,14 @@ static uint16_t convertStrengthToDutyCycle(uint16_t strength_tenthPct) {
  * @return  The duty cycles as a DutyCycles_t struct.
  */
 static DutyCycles_t calculateDutyCycles(DRV8870_Direction_t direction, uint16_t strength_tenthPct) {
+    // coasting stop
+    if (direction == DRV8870_DIRECTION_COAST) {
+        DutyCycles_t dutyCycles = {
+            .in0_tenthPct = DUTY_CYCLE_COAST_TENTH_PCT,
+            .in1_tenthPct = DUTY_CYCLE_COAST_TENTH_PCT,
+        };
+        return dutyCycles;
+    }
     // stopped (braked)
     if ((direction == DRV8870_DIRECTION_STOPPED) ||
         (strength_tenthPct == DRIVE_STRENGTH_MIN_TENTH_PCT)) {
@@ -160,8 +187,35 @@ DRV8870 DRV8870_ctor(Timer *const timerPtr,
 DRV8870_Err_t DRV8870_Init(DRV8870 *const self, uint32_t pwmFrequency_hz) {
     assert(self != NULL);
 
-    PWM_ERR_t err = PWM_Init(&self.pwmIN0, pwmFrequency_hz, 1000u)
+    // calculate IN0 and IN1 duty cycles for stopped or 0.0% drive strength
+    DutyCycles_t dutyCycles = calculateDutyCycles(DRV8870_DIRECTION_STOPPED,
+                                                  DRIVE_STRENGTH_MIN_TENTH_PCT);
 
+    // initialize the IN0 and IN1 PWM lines
+    PWM_Err_t pwmErr = PWM_Init(&self->pwmIN0, pwmFrequency_hz, dutyCycles.in0_tenthPct);
+    DRV8870_Err_t err = PWMErrMap[pwmErr];
+    if (err != DRV8870_ERR_NONE) {
+        return err;
+    }
+    pwmErr = PWM_Init(&self->pwmIN1, pwmFrequency_hz, dutyCycles.in1_tenthPct);
+    err = PWMErrMap[pwmErr];
+    if (err != DRV8870_ERR_NONE) {
+        return err;
+    }
+
+    // start the IN0 and IN1 PWM lines (braked)
+    pwmErr = PWM_Start(&self->pwmIN0);
+    err = PWMErrMap[pwmErr];
+    if (err != DRV8870_ERR_NONE) {
+        return err;
+    }
+    pwmErr = PWM_Start(&self->pwmIN1);
+    err = PWMErrMap[pwmErr];
+    if (err != DRV8870_ERR_NONE) {
+        return err;
+    }
+
+    self->state = STATE_DRIVING;
     return PWM_ERR_NONE;
 }
 
@@ -178,9 +232,28 @@ DRV8870_Err_t DRV8870_Init(DRV8870 *const self, uint32_t pwmFrequency_hz) {
  *          couldn't be executed successfully. If the function executes successfully,
  *          DRV8870_ERR_NONE.
  */
-DRV8870_Err_t DRV8870_Drive(DRV8870 const *const self, DRV8870_Direction_t direction,
+DRV8870_Err_t DRV8870_Drive(DRV8870 *const self, DRV8870_Direction_t direction,
                    uint16_t strength_tenthPct) {
     assert(self != NULL);
+
+    if (self->state != STATE_DRIVING) {
+        return DRV8870_ERR_UNINITIALIZED;
+    }
+
+    // calculate IN0 and IN1 duty cycles for the specified direction and drive strength
+    DutyCycles_t dutyCycles = calculateDutyCycles(direction, strength_tenthPct);
+
+    // change the duty cycles
+    PWM_Err_t pwmErr = PWM_SetDutyCycle(&self->pwmIN0, dutyCycles.in0_tenthPct);
+    DRV8870_Err_t err = PWMErrMap[pwmErr];
+    if (err != DRV8870_ERR_NONE) {
+        return err;
+    }
+    pwmErr = PWM_SetDutyCycle(&self->pwmIN1, dutyCycles.in1_tenthPct);
+    err = PWMErrMap[pwmErr];
+    if (err != DRV8870_ERR_NONE) {
+        return err;
+    }
 
     return PWM_ERR_NONE;
 }
@@ -195,10 +268,8 @@ DRV8870_Err_t DRV8870_Drive(DRV8870 const *const self, DRV8870_Direction_t direc
  *          couldn't be executed successfully. If the function executes successfully,
  *          DRV8870_ERR_NONE.
  */
-DRV8870_Err_t DRV8870_Brake(DRV8870 const *const self) {
-    assert(self != NULL);
-
-    return PWM_ERR_NONE;
+DRV8870_Err_t DRV8870_Brake(DRV8870 *const self) {
+    return DRV8870_Drive(self, DRV8870_DIRECTION_COAST, DRIVE_STRENGTH_MIN_TENTH_PCT);
 }
 
 
@@ -211,8 +282,6 @@ DRV8870_Err_t DRV8870_Brake(DRV8870 const *const self) {
  *          couldn't be executed successfully. If the function executes successfully,
  *          DRV8870_ERR_NONE.
  */
-DRV8870_Err_t DRV8870_Coast(DRV8870 const *const self) {
-    assert(self != NULL);
-
-    return PWM_ERR_NONE;
+DRV8870_Err_t DRV8870_Coast(DRV8870 *const self) {
+    return DRV8870_Drive(self, DRV8870_DIRECTION_STOPPED, DRIVE_STRENGTH_MIN_TENTH_PCT);
 }
