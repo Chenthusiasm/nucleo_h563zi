@@ -26,36 +26,39 @@ extern "C" {
 
 #include "Mutex.h"
 #include "stm32h5xx_hal.h"
+#include "Timer.h"
 
 
 /* External typedef ------------------------------------------------------------------------------*/
 
 /**
- * @brief   Enumeration of the different channels associated with PWM output generation using the
- *          MCU timer (TIM) peripheral.
+ * @enum    PWM_Err_t
+ * @brief   Enumeration of the different PWM function return error codes.
  */
 typedef enum {
-    PWM_CHANNEL_1 = TIM_CHANNEL_1,
-    PWM_CHANNEL_2 = TIM_CHANNEL_2,
-    PWM_CHANNEL_3 = TIM_CHANNEL_3,
-    PWM_CHANNEL_4 = TIM_CHANNEL_4
-    // TIM1 and TIM8 have 6 channels, but PWM output is not available on channels 5 or 6 so they
-    // are not defined
-} PWM_Channel_t;
+    PWM_ERR_NONE = 0u,          /*!< No error */
+    PWM_ERR_NULL_PARAM,         /*!< An input parameter is NULL which is invalid for that parameter;
+                                     assert checks should catch these (possibly UNUSED) */
+    PWM_ERR_INVALID_PARAM,      /*!< An input parameter had an invalid value */
+    PWM_ERR_RESOURCE_BLOCKED,   /*!< The HW resource is currently blocked */
+    PWM_ERR_UNINITIALIZED,      /*!< The PWM is not initialized */
+    PWM_ERR_STARTED,            /*!< The PWM has already started */
+    PWM_ERR_STOPPED,            /*!< The PWM is stopped or has already stopped */
+} PWM_Err_t;
 
 
 /**
  * @struct  PWM
  * @brief   Type definition of a structure that aggregates key components needed for the PWM signal
  *          generation to a pin.
- * @var PWM.timHandle           Handle of the MCU timer (TIM) peripheral.
- * @var PWM.timMutexPtr         Pointer to the timer (TIM) Mutex.
- * @var PWM.channel             TIM channel number the generated PWM is output to.
+ * @var PWM::timerPtr       Pointer to the Timer driver.
+ * @var PWM::channelMask    TIM channel mask.
+ * @var PWM::state          The current state of the PWM driver.
  */
 typedef struct {
-    TIM_HandleTypeDef *timHandle;
-    Mutex *timMutexPtr;
-    PWM_Channel_t channel;
+    Timer *timerPtr;
+    uint32_t channelMask;
+    uint8_t state;
 } PWM;
 
 
@@ -73,17 +76,15 @@ typedef struct {
 
 /* External functions ----------------------------------------------------------------------------*/
 
-PWM PWM_ctor(TIM_HandleTypeDef *const timHandle, TIM_TypeDef *const timPtr,
-             Mutex *const timMutexPtr,
-             PWM_Channel_t channel);
-bool PWM_Init(PWM const *const self, uint32_t switchingFrequency_hz, uint16_t dutyCycle_tenthPct);
-void PWM_Start(PWM const *const self);
-void PWM_Stop(PWM const *const self);
+PWM PWM_ctor(Timer *const timerPtr, Timer_Channel_t channel);
+PWM_Err_t PWM_Init(PWM *const self, uint32_t switchingFrequency_hz, uint16_t dutyCycle_tenthPct);
+PWM_Err_t PWM_Start(PWM *const self);
+PWM_Err_t PWM_Stop(PWM *const self);
 uint32_t PWM_GetSwitchingFrequency_hz(PWM const *const self);
 uint16_t PWM_GetDutyCycle_tenthPct(PWM const *const self);
-void PWM_SetDutyCycle(PWM const *const self, uint16_t dutyCycle_tenthPct);
-void PWM_SetHigh(PWM const *const self);
-void PWM_SetLow(PWM const *const self);
+PWM_Err_t PWM_SetDutyCycle(PWM const *const self, uint16_t dutyCycle_tenthPct);
+PWM_Err_t PWM_SetHigh(PWM const *const self);
+PWM_Err_t PWM_SetLow(PWM const *const self);
 
 
 #ifdef __cplusplus
