@@ -86,10 +86,10 @@ typedef struct {
 /* External functions ----------------------------------------------------------------------------*/
 
 DIO DIO_ctor(GPIO_TypeDef *const portHandle, uint8_t pin, DIO_EXTICallback_t extiCallback);
-bool DIO_Init(DIO const *const self);
-void DIO_SetHigh(DIO const *const self);
-void DIO_SetLow(DIO const *const self);
-void DIO_Toggle(DIO const *const self);
+DIO_Err_t DIO_Init(DIO const *const self);
+DIO_Err_t DIO_SetHigh(DIO const *const self);
+DIO_Err_t DIO_SetLow(DIO const *const self);
+DIO_Err_t DIO_Toggle(DIO const *const self);
 bool DIO_IsSetHigh(DIO const *const self);
 bool DIO_IsSetLow(DIO const *const self);
 

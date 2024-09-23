@@ -35,7 +35,9 @@ typedef enum {
                                          UNUSED) */
     DIO_IRQ_ERR_INVALID_PARAM,      /*!< An input parameter had an invalid value */
     DIO_IRQ_ERR_RESOURCE_BLOCKED,   /*!< The HW resource is currently blocked */
+    DIO_IRQ_ERR_UNINITIALIZED,      /*!< The DIO_IRQ is not initialized */
     DIO_IRQ_ERR_REGISTERED,         /*!< The specific IRQ is already registered */
+    DIO_IRQ_ERR_UNREGISTERED,       /*!< The specific IRQ is not registerd */
 } DIO_IRQ_Err_t;
 
 
@@ -54,7 +56,9 @@ typedef enum {
 /* External functions ----------------------------------------------------------------------------*/
 
 DIO_IRQ_Err_t DIO_IRQ_Init(void);
-DIO_IRQ_Err_t DIO_IRQ_RegisterDIO(DIO const *const self);
+DIO_IRQ_Err_t DIO_IRQ_Register(uint8_t pin, DIO_EXTICallback_t callback);
+DIO_IRQ_Err_t DIO_IRQ_Enable(uint8_t pin, bool enable);
+bool DIO_IRQ_IsEnabled(uint8_t pin);
 
 
 #ifdef __cplusplus

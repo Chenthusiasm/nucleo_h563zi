@@ -12,6 +12,13 @@
 #include <assert.h>
 
 #include "DIO_IRQ.h"
+#include "Mutex.h"
+#if defined(__has_include)
+    #if __has_include("FreeRTOS.h")
+        #define INCLUDE_FREE_RTOS
+        #include "FreeRTOS.h"
+    #endif
+#endif
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -24,7 +31,6 @@
  */
 typedef struct {
     DIO_EXTICallback_t callback;
-    GPIO_TypeDef *portHandle;
     bool enable;
 } EXTIConfig_t;
 
@@ -37,14 +43,25 @@ typedef struct {
  * @struct  DIO_IRQ
  * @brief   Type definition of a structure that aggregates key components needed for the DIO
  *          interrupt driver to function.
- * @var DIO_IRQ::configs[]  Array of EXTIConfig_t configuration for each unique EXTI.
+ * @var DIO_IRQ::configs[]      Array of EXTIConfig_t configuration for each unique EXTI.
+ * @var DIO_IRQ::mutex          Mutex to protect access to the instance.
+ * @var DIO_IRQ::initialized    Flag indicating if the instance has been initialized.
  */
 typedef struct {
     EXTIConfig_t configs[NUM_EXTI];
+    Mutex mutex;
+    bool initialized;
 } DIO_IRQ;
 
 
 /* Internal define -------------------------------------------------------------------------------*/
+
+#if (defined(MUTEX_H_INCLUDE_CMSIS_OS2) && defined(INCLUDE_FREE_RTOS))
+#define DIO_IRQ_MUTEX
+#endif /* defined(MUTEX_H_INCLUDE_CMSIS_OS2) && defined(INCLUDE_FREE_RTOS) */
+
+/* Default timeout value in milliseconds to acquire the mutex. */
+#define MUTEX_TIMEOUT_MS                (5u)
 
 
 /* Internal macro --------------------------------------------------------------------------------*/
@@ -53,11 +70,27 @@ typedef struct {
 /* Internal variables ----------------------------------------------------------------------------*/
 
 /* Instance of the DIO_IRQ driver. Initialized to 0: callbacks are NULL, GPIO port handles are
- * NULL, and all callbacks are disabled. */
+ * NULL, callbacks are disabled, empty Mutex, and not initialized. */
 static DIO_IRQ self = { 0 };
+
+#if defined(DIO_IRQ_MUTEX)
+/* Mutex handle. */
+static osMutexId_t mutexHandle;
+
+/* Semaphore control block (the mutex is based off of a semaphore) */
+static StaticSemaphore_t mutexCB;
+#endif /* defined(DIO_IRQ_MUTEX) */
 
 
 /* Internal constants ----------------------------------------------------------------------------*/
+
+#if defined(DIO_IRQ_MUTEX)
+static const osMutexAttr_t mutex_attributes = {
+  .name = "DIO_IRQ_mutex",
+  .cb_mem = &mutexCB,
+  .cb_size = sizeof(mutexCB),
+};
+#endif /* defined(DIO_IRQ_MUTEX) */
 
 
 /* Internal function prototypes ------------------------------------------------------------------*/
@@ -73,24 +106,98 @@ static DIO_IRQ self = { 0 };
 
 /**
  * @brief   Initializes the DIO_IRQ singleton.
+ * @note    Recommended to invoke this function before the different tasks/threads and task
+ *          scheduler starts.
  * @return  The specific DIO_IRQ_Err_t which indicates the specific error code if the function
  *          couldn't be executed successfully. If the function executes successfully,
  *          DIO_IRQ_ERR_NONE.
  */
 DIO_IRQ_Err_t DIO_IRQ_Init(void) {
+    if (self.initialized == true) {
+        return DIO_IRQ_ERR_NONE;
+    }
+#if defined(DIO_IRQ_MUTEX)
+    mutexHandle = osMutexNew(&mutex_attributes);
+    self.mutex = Mutex_ctor(mutexHandle);
+#else
+    self.mutex = Mutex_ctor();
+#endif /* defined(DIO_IRQ_MUTEX) */
+    Mutex_Init(&self.mutex);
+    self.initialized = true;
     return DIO_IRQ_ERR_NONE;
 }
 
 
 /**
  * @brief   Register a DIO driver instance with the interrupt.
- * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
+ * @param[in]   pin         The pin number (not the GPIO pin mask defined by the HAL).
+ * @param[in]   callback    The external interrupt/event callback function to invoke when the
+ *                          configured transition is externally triggered.
  * @return  The specific DIO_IRQ_Err_t which indicates the specific error code if the function
  *          couldn't be executed successfully. If the function executes successfully,
  *          DIO_IRQ_ERR_NONE.
  */
-DIO_IRQ_Err_t DIO_IRQ_RegisterDIO(DIO const *const dioPtr) {
-    assert(self != NULL);
-
+DIO_IRQ_Err_t DIO_IRQ_Register(uint8_t pin, DIO_EXTICallback_t callback) {
+    if (self.initialized == false) {
+        return DIO_IRQ_ERR_UNINITIALIZED;
+    }
+    if (pin >= NUM_EXTI) {
+        return DIO_IRQ_ERR_INVALID_PARAM;
+    }
+    if (Mutex_Acquire(&self.mutex, MUTEX_TIMEOUT_MS) == false) {
+        return DIO_IRQ_ERR_RESOURCE_BLOCKED;
+    }
+    if (self.configs[pin].callback != NULL) {
+        Mutex_Release(&self.mutex);
+        return DIO_IRQ_ERR_REGISTERED;
+    }
+    self.configs[pin] = (EXTIConfig_t){
+        .callback = callback,
+        .enable = true,
+    };
+    Mutex_Release(&self.mutex);
     return DIO_IRQ_ERR_NONE;
+}
+
+
+/**
+ * @brief   Enable/disable the interrupt for the specific pin.
+ * @param[in]   pin     The pin number (not the GPIO pin mask defined by the HAL).
+ * @param[in]   enable  Flag; true to enable, false to disable.
+ * @return  The specific DIO_IRQ_Err_t which indicates the specific error code if the function
+ *          couldn't be executed successfully. If the function executes successfully,
+ *          DIO_IRQ_ERR_NONE.
+ */
+DIO_IRQ_Err_t DIO_IRQ_Enable(uint8_t pin, bool enable) {
+    if (pin >= NUM_EXTI) {
+        return DIO_IRQ_ERR_INVALID_PARAM;
+    }
+    if (Mutex_Acquire(&self.mutex, MUTEX_TIMEOUT_MS) == false) {
+        return DIO_IRQ_ERR_RESOURCE_BLOCKED;
+    }
+    if (self.configs[pin].callback == NULL) {
+        Mutex_Release(&self.mutex);
+        return DIO_IRQ_ERR_UNREGISTERED;
+    }
+    self.configs[pin].enable = enable;
+    Mutex_Release(&self.mutex);
+    return DIO_IRQ_ERR_NONE;
+}
+
+
+/**
+ * @brief   Check if the interrupt is enabled for the specified pin.
+ * @param[in]   pin     The pin number (not the GPIO pin mask defined by the HAL).
+ * @return  If the interrupt is enabled for the specified pin, true; otherwise false.
+ */
+bool DIO_IRQ_IsEnabled(uint8_t pin) {
+    if (pin >= NUM_EXTI) {
+        return false;
+    }
+    if (Mutex_Acquire(&self.mutex, MUTEX_TIMEOUT_MS) == false) {
+        return DIO_IRQ_ERR_RESOURCE_BLOCKED;
+    }
+    bool enabled = self.configs[pin].enable;
+    Mutex_Release(&self.mutex);
+    return enabled;
 }
