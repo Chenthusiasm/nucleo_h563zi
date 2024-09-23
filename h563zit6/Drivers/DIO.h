@@ -24,26 +24,18 @@ extern "C" {
 /* External typedef ------------------------------------------------------------------------------*/
 
 /**
- * @brief Enumeration of the different DIO pins.
+ * @enum    DIO_Err_t
+ * @brief   Enumeration of the different DIO driver function return error codes.
  */
 typedef enum {
-    DIO_PIN_0 = GPIO_PIN_0,
-    DIO_PIN_1 = GPIO_PIN_1,
-    DIO_PIN_2 = GPIO_PIN_2,
-    DIO_PIN_3 = GPIO_PIN_3,
-    DIO_PIN_4 = GPIO_PIN_4,
-    DIO_PIN_5 = GPIO_PIN_5,
-    DIO_PIN_6 = GPIO_PIN_6,
-    DIO_PIN_7 = GPIO_PIN_7,
-    DIO_PIN_8 = GPIO_PIN_8,
-    DIO_PIN_9 = GPIO_PIN_9,
-    DIO_PIN_10 = GPIO_PIN_10,
-    DIO_PIN_11 = GPIO_PIN_11,
-    DIO_PIN_12 = GPIO_PIN_12,
-    DIO_PIN_13 = GPIO_PIN_13,
-    DIO_PIN_14 = GPIO_PIN_14,
-    DIO_PIN_15 = GPIO_PIN_15
-} DIO_Pin_t;
+    DIO_ERR_NONE = 0u,          /*!< No error */
+    DIO_ERR_NULL_PARAM,         /*!< An input parameter is NULL which is invalid for that
+                                         parameter; assert checks should catch these (possibly
+                                         UNUSED) */
+    DIO_ERR_INVALID_PARAM,      /*!< An input parameter had an invalid value */
+    DIO_ERR_RESOURCE_BLOCKED,   /*!< The HW resource is currently blocked */
+    DIO_ERR_INVALID_PIN,        /*!< The pin number is invalid */
+} DIO_Err_t;
 
 
 /**
@@ -74,7 +66,7 @@ typedef void (*DIO_EXTICallback_t)(DIO_Transition_t transition);
  */
 typedef struct {
     GPIO_TypeDef *portHandle;
-    DIO_Pin_t pin;
+    uint8_t pin;
     DIO_EXTICallback_t extiCallback;
 } DIO;
 
@@ -93,7 +85,7 @@ typedef struct {
 
 /* External functions ----------------------------------------------------------------------------*/
 
-DIO DIO_ctor(GPIO_TypeDef *const portHandle, DIO_Pin_t pin, DIO_EXTICallback_t extiCallback);
+DIO DIO_ctor(GPIO_TypeDef *const portHandle, uint8_t pin, DIO_EXTICallback_t extiCallback);
 bool DIO_Init(DIO const *const self);
 void DIO_SetHigh(DIO const *const self);
 void DIO_SetLow(DIO const *const self);

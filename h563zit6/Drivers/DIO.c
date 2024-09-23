@@ -19,6 +19,9 @@
 
 /* Internal define -------------------------------------------------------------------------------*/
 
+/* The number of pins on a DIO (GPIO) port. */
+#define PORT_NUM_PINS                   (16u)
+
 
 /* Internal macro --------------------------------------------------------------------------------*/
 
@@ -27,6 +30,26 @@
 
 
 /* Internal constants ----------------------------------------------------------------------------*/
+
+/* Map/lookup table of the pin number to GPIO pin mask used by the HAL. */
+static uint16_t const GPIOPinMaskMap[] = {
+    [ 0] = GPIO_PIN_0,
+    [ 1] = GPIO_PIN_1,
+    [ 2] = GPIO_PIN_2,
+    [ 3] = GPIO_PIN_3,
+    [ 4] = GPIO_PIN_4,
+    [ 5] = GPIO_PIN_5,
+    [ 6] = GPIO_PIN_6,
+    [ 7] = GPIO_PIN_7,
+    [ 8] = GPIO_PIN_8,
+    [ 9] = GPIO_PIN_9,
+    [10] = GPIO_PIN_10,
+    [11] = GPIO_PIN_11,
+    [12] = GPIO_PIN_12,
+    [13] = GPIO_PIN_13,
+    [14] = GPIO_PIN_14,
+    [15] = GPIO_PIN_15,
+};
 
 
 /* Internal function prototypes ------------------------------------------------------------------*/
@@ -43,13 +66,14 @@
 /**
  * @brief   Constructor that initializes the parameters of the Timer struct.
  * @param[in]   portHandle      Handle of the MCU GPIO port peripheral.
- * @param[in]   pin             DIO_Pin_t pin.
+ * @param[in]   pin             The pin number (not the GPIO pin mask defined by the HAL).
  * @param[in]   extiCallback    The external interrupt/event callback function to invoke when the
  *                              configured transition is externally triggered.
  * @return  The new DIO struct (to be copied upon assignment).
  */
-DIO DIO_ctor(GPIO_TypeDef *const portHandle, DIO_Pin_t pin, DIO_EXTICallback_t extiCallback) {
+DIO DIO_ctor(GPIO_TypeDef *const portHandle, uint8_t pin, DIO_EXTICallback_t extiCallback) {
     assert(portHandle != NULL);
+    assert(pin < PORT_NUM_PINS);
 
     DIO self = {
         .portHandle = portHandle,
@@ -63,24 +87,31 @@ DIO DIO_ctor(GPIO_TypeDef *const portHandle, DIO_Pin_t pin, DIO_EXTICallback_t e
 /**
  * @brief   Initializes the DIO instance.
  * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
- * @return  If the initialization was successful, true; otherwise, false.
+ * @return  The specific DIO_Err_t which indicates the specific error code if the function couldn't
+ *          be executed successfully. If the function executes successfully, DIO_ERR_NONE.
  */
-bool DIO_Init(DIO const *const self) {
+DIO_Err_t DIO_Init(DIO const *const self) {
     assert(self != NULL);
 
     // no init code; using the STM32CubeMX auto-generated initialization code
-    return true;
+    return DIO_ERR_NONE;
 }
 
 
 /**
  * @brief   Set the DIO pin to logic level high.
  * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
+ * @return  The specific DIO_Err_t which indicates the specific error code if the function couldn't
+ *          be executed successfully. If the function executes successfully, DIO_ERR_NONE.
  */
-void DIO_SetHigh(DIO const *const self) {
+DIO_Err_t DIO_SetHigh(DIO const *const self) {
     assert(self != NULL);
 
-    HAL_GPIO_WritePin(self->portHandle, self->pin, GPIO_PIN_SET);
+    if (self->pin >= PORT_NUM_PINS) {
+        return DIO_ERR_INVALID_PIN;
+    }
+    HAL_GPIO_WritePin(self->portHandle, GPIOPinMaskMap[self->pin], GPIO_PIN_SET);
+    return DIO_ERR_NONE;
 }
 
 
@@ -88,10 +119,14 @@ void DIO_SetHigh(DIO const *const self) {
  * @brief   Set the DIO pin to logic level low.
  * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
  */
-void DIO_SetLow(DIO const *const self) {
+DIO_Err_t DIO_SetLow(DIO const *const self) {
     assert(self != NULL);
 
-    HAL_GPIO_WritePin(self->portHandle, self->pin, GPIO_PIN_RESET);
+    if (self->pin >= PORT_NUM_PINS) {
+        return DIO_ERR_INVALID_PIN;
+    }
+    HAL_GPIO_WritePin(self->portHandle, GPIOPinMaskMap[self->pin], GPIO_PIN_RESET);
+    return DIO_ERR_NONE;
 }
 
 
@@ -99,10 +134,14 @@ void DIO_SetLow(DIO const *const self) {
  * @brief   Toggle the DIO pin to the opposite logic level from its current level.
  * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
  */
-void DIO_Toggle(DIO const *const self) {
+DIO_Err_t DIO_Toggle(DIO const *const self) {
     assert(self != NULL);
 
-    HAL_GPIO_TogglePin(self->portHandle, self->pin);
+    if (self->pin >= PORT_NUM_PINS) {
+        return DIO_ERR_INVALID_PIN;
+    }
+    HAL_GPIO_TogglePin(self->portHandle, GPIOPinMaskMap[self->pin]);
+    return DIO_ERR_NONE;
 }
 
 
@@ -114,7 +153,10 @@ void DIO_Toggle(DIO const *const self) {
 bool DIO_IsSetHigh(DIO const *const self) {
     assert(self != NULL);
 
-    return (HAL_GPIO_ReadPin(self->portHandle, self->pin) == GPIO_PIN_SET);
+    if (self->pin >= PORT_NUM_PINS) {
+        return false;
+    }
+    return (HAL_GPIO_ReadPin(self->portHandle, GPIOPinMaskMap[self->pin]) == GPIO_PIN_SET);
 }
 
 
@@ -126,5 +168,8 @@ bool DIO_IsSetHigh(DIO const *const self) {
 bool DIO_IsSetLow(DIO const *const self) {
     assert(self != NULL);
 
-    return (HAL_GPIO_ReadPin(self->portHandle, self->pin) == GPIO_PIN_RESET);
+    if (self->pin >= PORT_NUM_PINS) {
+        return false;
+    }
+    return (HAL_GPIO_ReadPin(self->portHandle, GPIOPinMaskMap[self->pin]) == GPIO_PIN_RESET);
 }
