@@ -60,11 +60,6 @@ typedef struct {
  */
 #define TIM_REG_ARR_MAX                 (UINT16_MAX)
 
-/* The upper limit of the TIM.ARR register value to calculate duty cycle without overflowing by
- * multiplying first (as opposed to dividing first).
- */
-#define ARR_DUTY_CYCLE_OVERFLOW_LIMIT   (UINT32_MAX / (DUTY_CYCLE_MAX_TENTH_PCT))
-
 
 /* Internal macro --------------------------------------------------------------------------------*/
 

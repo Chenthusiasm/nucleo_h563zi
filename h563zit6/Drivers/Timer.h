@@ -33,6 +33,12 @@ extern "C" {
 /* External typedef ------------------------------------------------------------------------------*/
 
 /**
+ * @brief   Type definition for the timer channel.
+ */
+typedef uint8_t Timer_Channel_t;
+
+
+/**
  * @enum    Timer_Err_t
  * @brief   Enumeration of the different PWM function return error codes.
  */
@@ -46,20 +52,6 @@ typedef enum {
     TIMER_ERR_MODE_CONFLICT,    /*!< The timer channel mode is being set to something that conflicts
                                      with an already set mode or the overall timer mod config */
 } Timer_Err_t;
-
-
-/**
- * @enum    Timer_Channel_t
- * @brief   Enumeration of the different timer channels associated with TIM hardware peripheral.
- */
-typedef enum {
-    TIMER_CHANNEL_1 = 0u,   /*!< Channel 1 */
-    TIMER_CHANNEL_2,        /*!< Channel 2 */
-    TIMER_CHANNEL_3,        /*!< Channel 3 */
-    TIMER_CHANNEL_4,        /*!< Channel 4 */
-    TIMER_CHANNEL_5,        /*!< Channel 5 */
-    TIMER_CHANNEL_6,        /*!< Channel 6 */
-} Timer_Channel_t;
 
 
 /* The maximum number of TIM channels; defined for use in the Timer struct */
