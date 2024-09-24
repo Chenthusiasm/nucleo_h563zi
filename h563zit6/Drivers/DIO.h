@@ -35,6 +35,7 @@ typedef enum {
     DIO_ERR_INVALID_PARAM,      /*!< An input parameter had an invalid value */
     DIO_ERR_RESOURCE_BLOCKED,   /*!< The HW resource is currently blocked */
     DIO_ERR_INVALID_PIN,        /*!< The pin number is invalid */
+    DIO_ERR_CALLBACK_CONFIG,    /*!< The callback configuration is invalid */
 } DIO_Err_t;
 
 
@@ -87,6 +88,7 @@ typedef struct {
 
 DIO DIO_ctor(GPIO_TypeDef *const portHandle, uint8_t pin, DIO_EXTICallback_t extiCallback);
 DIO_Err_t DIO_Init(DIO const *const self);
+DIO_Err_t DIO_EnableCallback(DIO const *const self, bool enable);
 DIO_Err_t DIO_SetHigh(DIO const *const self);
 DIO_Err_t DIO_SetLow(DIO const *const self);
 DIO_Err_t DIO_Toggle(DIO const *const self);

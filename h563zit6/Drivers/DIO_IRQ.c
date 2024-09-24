@@ -98,6 +98,40 @@ static const osMutexAttr_t mutex_attributes = {
 
 /* Internal functions ----------------------------------------------------------------------------*/
 
+/**
+ * @brief   Handle the the EXTI callback.
+ * @param[in]   self        Pointer to the DIO_IRQ struct that represents the DIO IRQ instance.
+ * @param[in]   pinMask     Bit mask of the GPIO pin number (where 0x00 = pin 0)
+ * @param[in]   transition  The DIO_Transition_t transition.
+ */
+static void handleEXTICallback(DIO_IRQ const *const self, uint16_t pinMask,
+                               DIO_Transition_t transition) {
+    uint8_t pin = 0u;
+    switch (pinMask) {
+    case GPIO_PIN_0 : pin =  0u; break;
+    case GPIO_PIN_1 : pin =  1u; break;
+    case GPIO_PIN_2 : pin =  2u; break;
+    case GPIO_PIN_3 : pin =  3u; break;
+    case GPIO_PIN_4 : pin =  4u; break;
+    case GPIO_PIN_5 : pin =  5u; break;
+    case GPIO_PIN_6 : pin =  6u; break;
+    case GPIO_PIN_7 : pin =  7u; break;
+    case GPIO_PIN_8 : pin =  8u; break;
+    case GPIO_PIN_9 : pin =  9u; break;
+    case GPIO_PIN_10: pin = 10u; break;
+    case GPIO_PIN_11: pin = 11u; break;
+    case GPIO_PIN_12: pin = 12u; break;
+    case GPIO_PIN_13: pin = 13u; break;
+    case GPIO_PIN_14: pin = 14u; break;
+    case GPIO_PIN_15: pin = 15u; break;
+    default:
+        return;
+    }
+    if ((self->configs[pin].enable == true) && (self->configs[pin].callback != NULL)) {
+        self->configs[pin].callback(transition);
+    }
+}
+
 
 /* External function prototypes ------------------------------------------------------------------*/
 
@@ -200,4 +234,36 @@ bool DIO_IRQ_IsEnabled(uint8_t pin) {
     bool enabled = self.configs[pin].enable;
     Mutex_Release(&self.mutex);
     return enabled;
+}
+
+
+/**
+ * @brief EXTI rising edge callback function.
+ * The EXTI rising edge callback function. The STM32 HAL provides a weak implementation so this
+ * implementation handles an extended interrupt based on the GPIO pin.
+ * @note    STM32CubeMX will auto-generate the corresponding EXTIx_IRQHandler functions in
+ *          "Core/Src/stm32h5xx_it.c". EXTIx_IRQHandler invokes the GPIO HAL function
+ *          HAL_GPIO_EXTI_IRQHandler with the corresponding pin mask. HAL_GPIO_EXTI_IRQHandler
+ *          invokes this function, HAL_GPIO_EXTI_Rising_Callback when the corresponding pin
+ *          transitions from low to high (rising).
+ * @param   GPIO_Pin    Bit mask of the GPIO pin number (where 0x00 = pin 0)
+ */
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
+    handleEXTICallback(&self, GPIO_Pin, DIO_TRANSITION_RISING_EDGE);
+}
+
+
+/**
+ * @brief EXTI falling edge callback function.
+ * The EXTI falling edge callback function. The STM32 HAL provides a weak implementation so this
+ * implementation handles an extended interrupt based on the GPIO pin.
+ * @note    STM32CubeMX will auto-generate the corresponding EXTIx_IRQHandler functions in
+ *          "Core/Src/stm32h5xx_it.c". EXTIx_IRQHandler invokes the GPIO HAL function
+ *          HAL_GPIO_EXTI_IRQHandler with the corresponding pin mask. HAL_GPIO_EXTI_IRQHandler
+ *          invokes this function, HAL_GPIO_EXTI_Falling_Callback when the corresponding pin
+ *          transitions from high to low (falling).
+ * @param   GPIO_Pin    Bit mask of the GPIO pin number (where 0x00 = pin 0)
+ */
+void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
+    handleEXTICallback(&self, GPIO_Pin, DIO_TRANSITION_FALLING_EDGE);
 }

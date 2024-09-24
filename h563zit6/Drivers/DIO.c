@@ -12,6 +12,7 @@
 #include <assert.h>
 
 #include "DIO.h"
+#include "DIO_IRQ.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -94,6 +95,30 @@ DIO_Err_t DIO_Init(DIO const *const self) {
     assert(self != NULL);
 
     // no init code; using the STM32CubeMX auto-generated initialization code
+    return DIO_ERR_NONE;
+}
+
+
+/**
+ * @brief   Set the DIO pin to logic level high.
+ * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
+ * @param[in]   enable  Flag; true to enable, false to disable.
+ * @return  The specific DIO_Err_t which indicates the specific error code if the function couldn't
+ *          be executed successfully. If the function executes successfully, DIO_ERR_NONE.
+ */
+DIO_Err_t DIO_EnableCallback(DIO const *const self, bool enable) {
+    assert(self != NULL);
+
+    DIO_IRQ_Err_t err = DIO_IRQ_Enable(self->pin, enable);
+    if (err == DIO_IRQ_ERR_INVALID_PARAM) {
+        return DIO_ERR_INVALID_PIN;
+    }
+    if (err == DIO_IRQ_ERR_RESOURCE_BLOCKED) {
+        return DIO_ERR_RESOURCE_BLOCKED;
+    }
+    if (err == DIO_IRQ_ERR_UNREGISTERED) {
+        return DIO_ERR_CALLBACK_CONFIG;
+    }
     return DIO_ERR_NONE;
 }
 
