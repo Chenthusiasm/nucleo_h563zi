@@ -273,7 +273,10 @@ PWM_Err_t PWM_Start(PWM *const self) {
     if (Timer_AcquireMutex(self->timerPtr, TIM_MUTEX_TIMEOUT_MS) == false) {
         return PWM_ERR_RESOURCE_BLOCKED;
     }
-    HAL_TIM_PWM_Start(Timer_GetTIMHandle(self->timerPtr), self->channelMask);
+    if (HAL_TIM_PWM_Start(Timer_GetTIMHandle(self->timerPtr), self->channelMask) != HAL_OK) {
+        Timer_ReleaseMutex(self->timerPtr);
+        return PWM_ERR_HAL;
+    }
     Timer_ReleaseMutex(self->timerPtr);
     self->state = STATE_STARTED;
     return PWM_ERR_NONE;
@@ -298,7 +301,10 @@ PWM_Err_t PWM_Stop(PWM *const self) {
     if (Timer_AcquireMutex(self->timerPtr, TIM_MUTEX_TIMEOUT_MS) == false) {
         return PWM_ERR_RESOURCE_BLOCKED;
     }
-    HAL_TIM_PWM_Stop(Timer_GetTIMHandle(self->timerPtr), self->channelMask);
+    if (HAL_TIM_PWM_Stop(Timer_GetTIMHandle(self->timerPtr), self->channelMask) != HAL_OK) {
+        Timer_ReleaseMutex(self->timerPtr);
+        return PWM_ERR_HAL;
+    }
     Timer_ReleaseMutex(self->timerPtr);
     self->state = STATE_STOPPED;
     return PWM_ERR_NONE;

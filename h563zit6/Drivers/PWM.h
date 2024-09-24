@@ -42,6 +42,7 @@ typedef enum {
     PWM_ERR_INVALID_PARAM,      /*!< An input parameter had an invalid value */
     PWM_ERR_RESOURCE_BLOCKED,   /*!< The HW resource is currently blocked */
     PWM_ERR_UNINITIALIZED,      /*!< The PWM is not initialized */
+    PWM_ERR_HAL,                /*!< HAL level PWM error */
     PWM_ERR_STARTED,            /*!< The PWM has already started */
     PWM_ERR_STOPPED,            /*!< The PWM is stopped or has already stopped */
 } PWM_Err_t;
