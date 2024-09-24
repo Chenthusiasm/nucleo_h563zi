@@ -94,8 +94,20 @@ DIO DIO_ctor(GPIO_TypeDef *const portHandle, uint8_t pin, DIO_EXTICallback_t ext
 DIO_Err_t DIO_Init(DIO const *const self) {
     assert(self != NULL);
 
-    // no init code; using the STM32CubeMX auto-generated initialization code
-    return DIO_ERR_NONE;
+    if (self->extiCallback == NULL) {
+        return DIO_ERR_NONE;
+    }
+    DIO_IRQ_Err_t err = DIO_IRQ_Register(self->pin, self->extiCallback);
+    switch (err) {
+    case DIO_IRQ_ERR_UNINITIALIZED:
+    case DIO_IRQ_ERR_INVALID_PARAM:
+    case DIO_IRQ_ERR_REGISTERED:
+        return DIO_ERR_CALLBACK_CONFIG;
+    case DIO_IRQ_ERR_RESOURCE_BLOCKED:
+        return DIO_ERR_RESOURCE_BLOCKED;
+    default:
+        return DIO_ERR_NONE;
+    }
 }
 
 
@@ -197,4 +209,37 @@ bool DIO_IsSetLow(DIO const *const self) {
         return false;
     }
     return (HAL_GPIO_ReadPin(self->portHandle, GPIOPinMaskMap[self->pin]) == GPIO_PIN_RESET);
+}
+
+
+/**
+ * @brief   Converts the HAL pin mask to the pin number.
+ * @param[in]   pinMask The HAL pin mask.
+ * @return  The HAL pin mask converted into the pin number; if the pin mask is invalid,
+ *          return DIO_INVALID_PIN.
+ */
+uint8_t DIO_GetPin(uint16_t pinMask) {
+    uint8_t pin = DIO_INVALID_PIN;
+    switch (pinMask) {
+    case GPIO_PIN_0 : pin =  0u; break;
+    case GPIO_PIN_1 : pin =  1u; break;
+    case GPIO_PIN_2 : pin =  2u; break;
+    case GPIO_PIN_3 : pin =  3u; break;
+    case GPIO_PIN_4 : pin =  4u; break;
+    case GPIO_PIN_5 : pin =  5u; break;
+    case GPIO_PIN_6 : pin =  6u; break;
+    case GPIO_PIN_7 : pin =  7u; break;
+    case GPIO_PIN_8 : pin =  8u; break;
+    case GPIO_PIN_9 : pin =  9u; break;
+    case GPIO_PIN_10: pin = 10u; break;
+    case GPIO_PIN_11: pin = 11u; break;
+    case GPIO_PIN_12: pin = 12u; break;
+    case GPIO_PIN_13: pin = 13u; break;
+    case GPIO_PIN_14: pin = 14u; break;
+    case GPIO_PIN_15: pin = 15u; break;
+    default:
+        // do nothing
+        ;
+    }
+    return pin;
 }

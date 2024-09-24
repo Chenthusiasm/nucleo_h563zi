@@ -106,29 +106,12 @@ static const osMutexAttr_t mutex_attributes = {
  */
 static void handleEXTICallback(DIO_IRQ const *const self, uint16_t pinMask,
                                DIO_Transition_t transition) {
-    uint8_t pin = 0u;
-    switch (pinMask) {
-    case GPIO_PIN_0 : pin =  0u; break;
-    case GPIO_PIN_1 : pin =  1u; break;
-    case GPIO_PIN_2 : pin =  2u; break;
-    case GPIO_PIN_3 : pin =  3u; break;
-    case GPIO_PIN_4 : pin =  4u; break;
-    case GPIO_PIN_5 : pin =  5u; break;
-    case GPIO_PIN_6 : pin =  6u; break;
-    case GPIO_PIN_7 : pin =  7u; break;
-    case GPIO_PIN_8 : pin =  8u; break;
-    case GPIO_PIN_9 : pin =  9u; break;
-    case GPIO_PIN_10: pin = 10u; break;
-    case GPIO_PIN_11: pin = 11u; break;
-    case GPIO_PIN_12: pin = 12u; break;
-    case GPIO_PIN_13: pin = 13u; break;
-    case GPIO_PIN_14: pin = 14u; break;
-    case GPIO_PIN_15: pin = 15u; break;
-    default:
+    uint8_t pin = DIO_GetPin(pinMask);
+    if (pin >= NUM_EXTI) {
         return;
     }
     if ((self->configs[pin].enable == true) && (self->configs[pin].callback != NULL)) {
-        self->configs[pin].callback(transition);
+        self->configs[pin].callback(pin, transition);
     }
 }
 

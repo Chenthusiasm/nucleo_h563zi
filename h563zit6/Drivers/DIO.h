@@ -51,9 +51,10 @@ typedef enum {
 
 /**
  * @brief   DIO external interrupt/event callback function.
+ * @param[in]   pin         The pin number (not the GPIO pin mask defined by the HAL).
  * @param[in]   transition  The type of edge transition that triggered the external interrupt.
  */
-typedef void (*DIO_EXTICallback_t)(DIO_Transition_t transition);
+typedef void (*DIO_EXTICallback_t)(uint8_t pin, DIO_Transition_t transition);
 
 
 /**
@@ -73,6 +74,9 @@ typedef struct {
 
 
 /* Defines ---------------------------------------------------------------------------------------*/
+
+/* Invalid pin number. */
+#define DIO_INVALID_PIN                 (0xff)
 
 
 /* External macro --------------------------------------------------------------------------------*/
@@ -94,6 +98,7 @@ DIO_Err_t DIO_SetLow(DIO const *const self);
 DIO_Err_t DIO_Toggle(DIO const *const self);
 bool DIO_IsSetHigh(DIO const *const self);
 bool DIO_IsSetLow(DIO const *const self);
+uint8_t DIO_GetPin(uint16_t pinMask);
 
 
 #ifdef __cplusplus
