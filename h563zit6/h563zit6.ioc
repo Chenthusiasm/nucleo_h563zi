@@ -421,6 +421,6 @@ VP_TIM17_VS_ClockSourceINT.Signal=TIM17_VS_ClockSourceINT
 board=custom
 rtos.0.ip=STMicroelectronics.X-CUBE-FREERTOS.1.2.0
 rtos.0.mutexes.0=allocationType,Static;controlBlockName,TestMutexCB;name,TestMutex
-rtos.0.tasks.0=allocationType,Static;bufferName,MainAppTaskBuffer;codeGen,As weak;controlBlockName,MainAppTaskCB;entry,MainAppTask_Start;name,MainAppTask;parameter,NULL;priority,osPriorityNormal;stackSize,128
+rtos.0.tasks.0=allocationType,Static;bufferName,MainAppTaskBuffer;codeGen,As weak;controlBlockName,MainAppTaskCB;entry,MainAppTask_Start;name,MainAppTask;parameter,NULL;priority,osPriorityNormal;stackSize,256
 rtos.0.tasks.1=allocationType,Static;bufferName,DiagnosticsTaskBuffer;codeGen,As weak;controlBlockName,DiagnosticsTaskCB;entry,DiagnosticsTask_Start;name,DiagnosticsTask;parameter,NULL;priority,osPriorityNormal;stackSize,1024
 isbadioc=false

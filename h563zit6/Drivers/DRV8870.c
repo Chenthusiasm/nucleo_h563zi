@@ -41,17 +41,23 @@ typedef struct {
 
 /* Internal define -------------------------------------------------------------------------------*/
 
+/* The minimum value for percentage in units of tenth of a percent (0.1%). */
+#define PERCENTAGE_MIN_TENTH_PCT        (0u)
+
+/* The maximum value for percentage in units of tenth of a percent (0.1%). */
+#define PERCENTAGE_MAX_TENTH_PCT        (1000u)
+
 /* The minimum value for the motor drive strength in units of tenth of a percent (0.1%). */
-#define DRIVE_STRENGTH_MIN_TENTH_PCT    (0u)
+#define DRIVE_STRENGTH_MIN_TENTH_PCT    (PERCENTAGE_MIN_TENTH_PCT)
 
 /* The maximum value for the motor drive strength in units of tenth of a percent (0.1%). */
-#define DRIVE_STRENGTH_MAX_TENTH_PCT    (1000u)
+#define DRIVE_STRENGTH_MAX_TENTH_PCT    (PERCENTAGE_MAX_TENTH_PCT)
 
 /* The PWM duty cycle for a stopped (braked) motor. */
-#define DUTY_CYCLE_STOPPED_TENTH_PCT    (1000u)
+#define DUTY_CYCLE_STOPPED_TENTH_PCT    (PERCENTAGE_MAX_TENTH_PCT)
 
 /* The PWM duty cycle for the coasting stop. */
-#define DUTY_CYCLE_COAST_TENTH_PCT      (0u)
+#define DUTY_CYCLE_COAST_TENTH_PCT      (PERCENTAGE_MIN_TENTH_PCT)
 
 
 /* Internal macro --------------------------------------------------------------------------------*/
@@ -80,16 +86,15 @@ static const DRV8870_Err_t PWMErrMap[] = {
 /* Internal functions ----------------------------------------------------------------------------*/
 
 /**
- * @brief   Checks the drive strength and limits it to the range of 0.0 - 100.0%.
- * @param[in]   driveStrength_tenthPct  The drive strength to limit; in units of tenth of a percent
- *              (0.1%).
- * @return  The limited drive strength that falls in the range of 0.0 - 100.0%.
+ * @brief   Limits the percentage to the range of 0.0 - 100.0%.
+ * @param[in]   percentage_tenthPct The percentage to limit; in units of tenth of a percent (0.1%).
+ * @return  The limited percentage that falls in the range of 0.0 - 100.0%.
  */
-static uint16_t limitStrength_tenthPct(uint16_t strength_tenthPct) {
-    if (strength_tenthPct > DRIVE_STRENGTH_MAX_TENTH_PCT) {
-        strength_tenthPct = DRIVE_STRENGTH_MAX_TENTH_PCT;
+static uint16_t limitPercentage_tenthPct(uint16_t percentage_tenthPct) {
+    if (percentage_tenthPct > PERCENTAGE_MAX_TENTH_PCT) {
+        percentage_tenthPct = PERCENTAGE_MAX_TENTH_PCT;
     }
-    return strength_tenthPct;
+    return percentage_tenthPct;
 }
 
 
@@ -97,11 +102,24 @@ static uint16_t limitStrength_tenthPct(uint16_t strength_tenthPct) {
  * @brief   Converts the drive strength to the PWM duty cycle needed to drive the motor at the
  *          specified drive strength.
  * @note    The drive strength and PWM duty cycle is inversely proportional.
- * @param[in]   strength_tenthPct
+ * @param[in]   strength_tenthPct   The drive strength to convert.
+ * @return  The PWM duty cycle needed to generate the specified drive strength.
  */
 static uint16_t convertStrengthToDutyCycle(uint16_t strength_tenthPct) {
-    strength_tenthPct = limitStrength_tenthPct(strength_tenthPct);
-    return (DRIVE_STRENGTH_MAX_TENTH_PCT - strength_tenthPct);
+    strength_tenthPct = limitPercentage_tenthPct(strength_tenthPct);
+    return (PERCENTAGE_MAX_TENTH_PCT - strength_tenthPct);
+}
+
+
+/**
+ * @brief   Converts the PWM duty cycle to motor drive strength.
+ * @note    The drive strength and PWM duty cycle is inversely proportional.
+ * @param[in]   dutyCycle_tenthPct  The duty cycle to convert.
+ * @return  The motor drive strength given the specified duty cycle.
+ */
+static uint16_t convertDutyCycleToStrength(uint16_t dutyCycle_tenthPct) {
+    dutyCycle_tenthPct = limitPercentage_tenthPct(dutyCycle_tenthPct);
+    return (PERCENTAGE_MAX_TENTH_PCT - dutyCycle_tenthPct);
 }
 
 
@@ -146,6 +164,73 @@ static DutyCycles_t calculateDutyCycles(DRV8870_Direction_t direction, uint16_t 
         .in1_tenthPct = DUTY_CYCLE_STOPPED_TENTH_PCT,
     };
     return dutyCycles;
+}
+
+
+/**
+ * @brief   Accessor to get the current duty cycles on the IN0 and IN1 lines.
+ * @param[in]   self    Pointer to the DRV8870 motor driver struct that represents the motor driver
+ *                      instance.
+ * @return  The duty cycles of IN0 and IN1 aggregated in the DutyCycles_t struct (to be copied upon
+ *          assignment).
+ */
+static DutyCycles_t getDutyCycles(DRV8870 const *const self) {
+    DutyCycles_t dutyCycles = {
+        .in0_tenthPct = PWM_GetDutyCycle_tenthPct(&self->pwmIN0),
+        .in1_tenthPct = PWM_GetDutyCycle_tenthPct(&self->pwmIN1),
+    };
+    return dutyCycles;
+}
+
+
+/**
+ * @brief   Helper function to determine if the motor driver is stopped and not driving the motor.
+ * @param[in]   dutyCycles  The duty cycles of the IN0 and IN1 lines aggregated in DutyCycles_t.
+ * @return  If the motor driver is stopped (braked), true; otherwise, false.
+ */
+static bool isStopped(DutyCycles_t const dutyCycles) {
+    return ((dutyCycles.in0_tenthPct == dutyCycles.in1_tenthPct) &&
+            ((dutyCycles.in0_tenthPct == PERCENTAGE_MIN_TENTH_PCT) ||
+             (dutyCycles.in0_tenthPct == PERCENTAGE_MAX_TENTH_PCT)));
+}
+
+
+/**
+ * @brief   Helper function to get the current drive direction of the motor driver.
+ * @param[in]   dutyCycles  The duty cycles of the IN0 and IN1 lines aggregated in DutyCycles_t.
+ * @return  The current drive direction as DRV8870_Direction_t.
+ */
+static uint16_t getDirection(DutyCycles_t const dutyCycles) {
+    if (isStopped(dutyCycles)) {
+        return DRV8870_DIRECTION_STOPPED;
+    }
+    if ((dutyCycles.in1_tenthPct > PERCENTAGE_MIN_TENTH_PCT) &&
+        (dutyCycles.in1_tenthPct < PERCENTAGE_MAX_TENTH_PCT)) {
+        return DRV8870_DIRECTION_FORWARD;
+    }
+    if ((dutyCycles.in0_tenthPct > PERCENTAGE_MIN_TENTH_PCT) &&
+        (dutyCycles.in0_tenthPct < PERCENTAGE_MAX_TENTH_PCT)) {
+        return DRV8870_DIRECTION_REVERSE;
+    }
+    return DRV8870_DIRECTION_STOPPED;
+}
+
+
+/**
+ * @brief   Helper function to get the current drive strength of the motor driver in units of tenth
+ *          of a percent (0.1%).
+ * @param[in]   dutyCycles  The duty cycles of the IN0 and IN1 lines aggregated in DutyCycles_t.
+ * @return  The current drive strength in units of tenth of a percent (0.1%).
+ */
+static uint16_t getStrength_tenthPct(DutyCycles_t const dutyCycles) {
+    DRV8870_Direction_t direction = getDirection(dutyCycles);
+    if (direction == DRV8870_DIRECTION_FORWARD) {
+        return convertDutyCycleToStrength(dutyCycles.in1_tenthPct);
+    }
+    if (direction == DRV8870_DIRECTION_REVERSE) {
+        return convertDutyCycleToStrength(dutyCycles.in0_tenthPct);
+    }
+    return DRIVE_STRENGTH_MIN_TENTH_PCT;
 }
 
 
@@ -269,7 +354,8 @@ DRV8870_Err_t DRV8870_Drive(DRV8870 *const self, DRV8870_Direction_t direction,
  *          DRV8870_ERR_NONE.
  */
 DRV8870_Err_t DRV8870_Brake(DRV8870 *const self) {
-    return DRV8870_Drive(self, DRV8870_DIRECTION_COAST, DRIVE_STRENGTH_MIN_TENTH_PCT);
+    // DRV8870_Drive does an assert check for self != NULL
+    return DRV8870_Drive(self, DRV8870_DIRECTION_STOPPED, DRIVE_STRENGTH_MIN_TENTH_PCT);
 }
 
 
@@ -283,5 +369,49 @@ DRV8870_Err_t DRV8870_Brake(DRV8870 *const self) {
  *          DRV8870_ERR_NONE.
  */
 DRV8870_Err_t DRV8870_Coast(DRV8870 *const self) {
-    return DRV8870_Drive(self, DRV8870_DIRECTION_STOPPED, DRIVE_STRENGTH_MIN_TENTH_PCT);
+    // DRV8870_Drive does an assert check for self != NULL
+    return DRV8870_Drive(self, DRV8870_DIRECTION_COAST, DRIVE_STRENGTH_MIN_TENTH_PCT);
+}
+
+
+/**
+ * @brief   Accessor to determine if the motor driver is stopped and not driving the motor.
+ * @param[in]   self    Pointer to the DRV8870 motor driver struct that represents the motor driver
+ *                      instance.
+ * @return  If the motor driver is stopped (braked), true; otherwise, false.
+ */
+bool DRV8870_IsStopped(DRV8870 const *const self) {
+    assert(self != NULL);
+
+    DutyCycles_t dutyCycles = getDutyCycles(self);
+    return isStopped(dutyCycles);
+}
+
+
+/**
+ * @brief   Accessor to get the current drive direction of the motor driver.
+ * @param[in]   self    Pointer to the DRV8870 motor driver struct that represents the motor driver
+ *                      instance.
+ * @return  The current drive direction as DRV8870_Direction_t.
+ */
+DRV8870_Direction_t DRV8870_GetDirection(DRV8870 const *const self) {
+    assert(self != NULL);
+
+    DutyCycles_t dutyCycles = getDutyCycles(self);
+    return getDirection(dutyCycles);
+}
+
+
+/**
+ * @brief   Accessor to get the current drive strength of the motor driver in units of tenth
+ *          of a percent (0.1%).
+ * @param[in]   self    Pointer to the DRV8870 motor driver struct that represents the motor driver
+ *                      instance.
+ * @return  The current drive strength in units of tenth of a percent (0.1%).
+ */
+uint16_t DRV8870_GetStrength_tenthPct(DRV8870 const *const self) {
+    assert(self != NULL);
+
+    DutyCycles_t dutyCycles = getDutyCycles(self);
+    return getStrength_tenthPct(dutyCycles);
 }

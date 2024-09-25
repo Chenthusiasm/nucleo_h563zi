@@ -48,7 +48,7 @@ typedef StaticSemaphore_t osStaticMutexDef_t;
 /* USER CODE END Variables */
 /* Definitions for MainAppTask */
 osThreadId_t MainAppTaskHandle;
-uint32_t MainAppTaskBuffer[ 128 ];
+uint32_t MainAppTaskBuffer[ 256 ];
 osStaticThreadDef_t MainAppTaskCB;
 const osThreadAttr_t MainAppTask_attributes = {
   .name = "MainAppTask",

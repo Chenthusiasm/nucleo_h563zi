@@ -86,6 +86,9 @@ DRV8870_Err_t DRV8870_Drive(DRV8870 *const self, DRV8870_Direction_t direction,
                    uint16_t strength_tenthPct);
 DRV8870_Err_t DRV8870_Brake(DRV8870 *const self);
 DRV8870_Err_t DRV8870_Coast(DRV8870 *const self);
+bool DRV8870_IsStopped(DRV8870 const *const self);
+DRV8870_Direction_t DRV8870_GetDirection(DRV8870 const *const self);
+uint16_t DRV8870_GetStrength_tenthPct(DRV8870 const *const self);
 
 
 #ifdef __cplusplus
