@@ -33,9 +33,17 @@ extern "C" {
 /* External typedef ------------------------------------------------------------------------------*/
 
 /**
- * @brief   Type definition for the timer channel.
+ * @brief   Type definition for the Timer channel.
+ * @note    0u = channel 1, 1u = channel 2, 2u = channel 3 ... 5u = channel 6.
  */
 typedef uint8_t Timer_Channel_t;
+
+
+/**
+ * @brief   Type definition for the Timer channel mask used by the HAL layer.
+ * @note    See TIM_CHANNEL_x (where x = 0 - 6, ALL).
+ */
+typedef uint8_t Timer_ChanelMask_t;
 
 
 /**
@@ -93,8 +101,8 @@ Timer_Err_t Timer_SetModeEncoder(Timer *const self);
 TIM_HandleTypeDef *const Timer_GetTIMHandle(Timer const *const self);
 uint32_t Timer_GetClockFrequency_hz(Timer const *const self);
 uint32_t Timer_GetPrescaler(Timer const *const self);
-uint32_t Timer_GetChannelMask(Timer_Channel_t channel);
-uint32_t Timer_GetChannelMaskAll(void);
+Timer_ChanelMask_t Timer_GetChannelMask(Timer_Channel_t channel);
+Timer_ChanelMask_t Timer_GetChannelMaskAll(void);
 bool Timer_IsModeEncoder(Timer const *const self);
 bool Timer_IsModePWM(Timer const *const self, Timer_Channel_t channel);
 bool Timer_AcquireMutex(Timer const *const self, uint32_t timeout_ms);

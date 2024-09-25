@@ -58,7 +58,7 @@ typedef enum {
  */
 typedef struct {
     Timer *timerPtr;
-    uint32_t channelMask;
+    Timer_ChanelMask_t channelMask;
     uint8_t state;
 } PWM;
 

@@ -299,10 +299,10 @@ uint32_t Timer_GetPrescaler(Timer const *const self) {
  * @param[in]   channel The timer channel to get the mask of.
  * @return  The HAL channel mask of the specified channel.
  */
-uint32_t Timer_GetChannelMask(Timer_Channel_t channel) {
+Timer_ChanelMask_t Timer_GetChannelMask(Timer_Channel_t channel) {
     assert(isChannelValid(channel) == true);
 
-    static const uint32_t ChannelMask[] = {
+    static const Timer_ChanelMask_t ChannelMask[] = {
         [CHANNEL_1] = TIM_CHANNEL_1,
         [CHANNEL_2] = TIM_CHANNEL_2,
         [CHANNEL_3] = TIM_CHANNEL_3,
@@ -318,7 +318,7 @@ uint32_t Timer_GetChannelMask(Timer_Channel_t channel) {
  * @brief   Gets the HAL-usable channel mask for all Timer channels.
  * @return  The HAL channel mask of all the timer channels.
  */
-uint32_t Timer_GetChannelMaskAll(void) {
+Timer_ChanelMask_t Timer_GetChannelMaskAll(void) {
     return TIM_CHANNEL_ALL;
 }
 
