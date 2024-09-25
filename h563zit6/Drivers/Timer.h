@@ -33,6 +33,20 @@ extern "C" {
 /* External typedef ------------------------------------------------------------------------------*/
 
 /**
+ * @brief   Type definition for the Timer channel.
+ * @note    0u = channel 1, 1u = channel 2, 2u = channel 3 ... 5u = channel 6.
+ */
+typedef uint8_t Timer_Channel_t;
+
+
+/**
+ * @brief   Type definition for the Timer channel mask used by the HAL layer.
+ * @note    See TIM_CHANNEL_x (where x = 0 - 6, ALL).
+ */
+typedef uint8_t Timer_ChanelMask_t;
+
+
+/**
  * @enum    Timer_Err_t
  * @brief   Enumeration of the different PWM function return error codes.
  */
@@ -46,20 +60,6 @@ typedef enum {
     TIMER_ERR_MODE_CONFLICT,    /*!< The timer channel mode is being set to something that conflicts
                                      with an already set mode or the overall timer mod config */
 } Timer_Err_t;
-
-
-/**
- * @enum    Timer_Channel_t
- * @brief   Enumeration of the different timer channels associated with TIM hardware peripheral.
- */
-typedef enum {
-    TIMER_CHANNEL_1 = 0u,   /*!< Channel 1 */
-    TIMER_CHANNEL_2,        /*!< Channel 2 */
-    TIMER_CHANNEL_3,        /*!< Channel 3 */
-    TIMER_CHANNEL_4,        /*!< Channel 4 */
-    TIMER_CHANNEL_5,        /*!< Channel 5 */
-    TIMER_CHANNEL_6,        /*!< Channel 6 */
-} Timer_Channel_t;
 
 
 /* The maximum number of TIM channels; defined for use in the Timer struct */
@@ -101,8 +101,8 @@ Timer_Err_t Timer_SetModeEncoder(Timer *const self);
 TIM_HandleTypeDef *const Timer_GetTIMHandle(Timer const *const self);
 uint32_t Timer_GetClockFrequency_hz(Timer const *const self);
 uint32_t Timer_GetPrescaler(Timer const *const self);
-uint32_t Timer_GetChannelMask(Timer_Channel_t channel);
-uint32_t Timer_GetChannelMaskAll(void);
+Timer_ChanelMask_t Timer_GetChannelMask(Timer_Channel_t channel);
+Timer_ChanelMask_t Timer_GetChannelMaskAll(void);
 bool Timer_IsModeEncoder(Timer const *const self);
 bool Timer_IsModePWM(Timer const *const self, Timer_Channel_t channel);
 bool Timer_AcquireMutex(Timer const *const self, uint32_t timeout_ms);

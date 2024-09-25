@@ -35,6 +35,21 @@ typedef enum {
 } Channel_Mode_t;
 
 
+/**
+ * @enum    Timer_Channel_t
+ * @brief   Enumeration of the different timer channels associated with TIM hardware peripheral.
+ * @note    These are contants defined as enumerations.
+ */
+typedef enum {
+    CHANNEL_1 = 0u, /*!< Channel 1 */
+    CHANNEL_2,      /*!< Channel 2 */
+    CHANNEL_3,      /*!< Channel 3 */
+    CHANNEL_4,      /*!< Channel 4 */
+    CHANNEL_5,      /*!< Channel 5 */
+    CHANNEL_6,      /*!< Channel 6 */
+} Channel_t;
+
+
 /* Internal define -------------------------------------------------------------------------------*/
 
 /* Default timeout value in milliseconds to acquire the HW TIM mutex. */
@@ -63,12 +78,7 @@ typedef enum {
  *          channels 1 - 4 support PWM functionality and not all TIM support 6 channels.
  */
 static bool isChannelValid(Timer_Channel_t channel) {
-    if ((channel != TIMER_CHANNEL_1) ||
-        (channel != TIMER_CHANNEL_2) ||
-        (channel != TIMER_CHANNEL_3) ||
-        (channel != TIMER_CHANNEL_4) ||
-        (channel != TIMER_CHANNEL_5) ||
-        (channel != TIMER_CHANNEL_6)) {
+    if (channel > CHANNEL_6) {
         return false;
     }
     return true;
@@ -83,10 +93,7 @@ static bool isChannelValid(Timer_Channel_t channel) {
  *          channels 1 - 4 support PWM functionality and not all TIM support 6 channels.
  */
 static bool isPWMChannelValid(Timer_Channel_t channel) {
-    if ((channel != TIMER_CHANNEL_1) ||
-        (channel != TIMER_CHANNEL_2) ||
-        (channel != TIMER_CHANNEL_3) ||
-        (channel != TIMER_CHANNEL_4)) {
+    if (channel > CHANNEL_4) {
         return false;
     }
     return true;
@@ -115,14 +122,14 @@ static bool validatePWMChannel(TIM_TypeDef const *const timPtr, Timer_Channel_t 
     }
     // TIM12 and TIM 15 both have 2 channels that support PWM
     if ((timPtr == TIM12) || (timPtr == TIM15)) {
-        if ((channel != TIMER_CHANNEL_1) || (channel != TIMER_CHANNEL_2)) {
+        if ((channel != CHANNEL_1) || (channel != CHANNEL_2)) {
             return false;
         }
         return true;
     }
     // TIM13, TIM14, TIM16, and TIM17 only have 1 channel that supports PWM
     if ((timPtr == TIM13) || (timPtr == TIM14) || (timPtr == TIM16) || (timPtr == TIM17)) {
-        if (channel != TIMER_CHANNEL_1) {
+        if (channel != CHANNEL_1) {
             return false;
         }
     }
@@ -234,12 +241,12 @@ Timer_Err_t Timer_SetModeEncoder(Timer *const self) {
     if (validateEncoderTimer(getTIMRegister(self)) == false) {
         return TIMER_ERR_MODE_INVALID;
     }
-    if ((self->channelMode[TIMER_CHANNEL_1] != CHANNEL_MODE_RESET) &&
-        (self->channelMode[TIMER_CHANNEL_2] != CHANNEL_MODE_RESET)) {
+    if ((self->channelMode[CHANNEL_1] != CHANNEL_MODE_RESET) &&
+        (self->channelMode[CHANNEL_2] != CHANNEL_MODE_RESET)) {
         return TIMER_ERR_MODE_CONFLICT;
     }
-    self->channelMode[TIMER_CHANNEL_1] = CHANNEL_MODE_ENCODER;
-    self->channelMode[TIMER_CHANNEL_2] = CHANNEL_MODE_ENCODER;
+    self->channelMode[CHANNEL_1] = CHANNEL_MODE_ENCODER;
+    self->channelMode[CHANNEL_2] = CHANNEL_MODE_ENCODER;
     return TIMER_ERR_NONE;
 }
 
@@ -292,16 +299,16 @@ uint32_t Timer_GetPrescaler(Timer const *const self) {
  * @param[in]   channel The timer channel to get the mask of.
  * @return  The HAL channel mask of the specified channel.
  */
-uint32_t Timer_GetChannelMask(Timer_Channel_t channel) {
+Timer_ChanelMask_t Timer_GetChannelMask(Timer_Channel_t channel) {
     assert(isChannelValid(channel) == true);
 
-    static const uint32_t ChannelMask[] = {
-        [0] = TIM_CHANNEL_1,
-        [1] = TIM_CHANNEL_2,
-        [2] = TIM_CHANNEL_3,
-        [3] = TIM_CHANNEL_4,
-        [4] = TIM_CHANNEL_5,
-        [5] = TIM_CHANNEL_6,
+    static const Timer_ChanelMask_t ChannelMask[] = {
+        [CHANNEL_1] = TIM_CHANNEL_1,
+        [CHANNEL_2] = TIM_CHANNEL_2,
+        [CHANNEL_3] = TIM_CHANNEL_3,
+        [CHANNEL_4] = TIM_CHANNEL_4,
+        [CHANNEL_5] = TIM_CHANNEL_5,
+        [CHANNEL_6] = TIM_CHANNEL_6,
     };
     return ChannelMask[channel];
 }
@@ -311,7 +318,7 @@ uint32_t Timer_GetChannelMask(Timer_Channel_t channel) {
  * @brief   Gets the HAL-usable channel mask for all Timer channels.
  * @return  The HAL channel mask of all the timer channels.
  */
-uint32_t Timer_GetChannelMaskAll(void) {
+Timer_ChanelMask_t Timer_GetChannelMaskAll(void) {
     return TIM_CHANNEL_ALL;
 }
 
@@ -324,14 +331,15 @@ uint32_t Timer_GetChannelMaskAll(void) {
 bool Timer_IsModeEncoder(Timer const *const self) {
     assert(self != NULL);
 
-    return ((self->channelMode[TIMER_CHANNEL_1] == CHANNEL_MODE_ENCODER) ||
-            (self->channelMode[TIMER_CHANNEL_2] == CHANNEL_MODE_ENCODER));
+    return ((self->channelMode[CHANNEL_1] == CHANNEL_MODE_ENCODER) ||
+            (self->channelMode[CHANNEL_2] == CHANNEL_MODE_ENCODER));
 }
 
 
 /**
  * @brief   Check if the Timer channel is configured for PWM mode.
  * @param[in]   self    Pointer to the Timer struct that represents the timer instance.
+ * @param[in]   channel The timer channel to check.
  * @return  If the timer channel is configure for PWM mode, true; otherwise, false.
  */
 bool Timer_IsModePWM(Timer const *const self, Timer_Channel_t channel) {

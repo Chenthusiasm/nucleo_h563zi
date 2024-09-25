@@ -60,7 +60,7 @@ const osThreadAttr_t MainAppTask_attributes = {
 };
 /* Definitions for DiagnosticsTask */
 osThreadId_t DiagnosticsTaskHandle;
-uint32_t DiagnosticsTaskBuffer[ 256 ];
+uint32_t DiagnosticsTaskBuffer[ 1024 ];
 osStaticThreadDef_t DiagnosticsTaskCB;
 const osThreadAttr_t DiagnosticsTask_attributes = {
   .name = "DiagnosticsTask",
