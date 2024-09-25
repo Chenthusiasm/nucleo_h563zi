@@ -24,6 +24,20 @@ extern "C" {
 /* External typedef ------------------------------------------------------------------------------*/
 
 /**
+ * @brief   Type definition for the GPIO port pin.
+ * @note    0u = pin 0, 1u = pin 1, 2u = pin 2 ... 15u = pin 15.
+ */
+typedef uint8_t DIO_Pin_t;
+
+
+/**
+ * @brief   Type definition for the GPIO port pin mask used by the HAL layer.
+ * @note    See GPIO_PIN_x (where x = 0 - 15).
+ */
+typedef uint16_t DIO_PinMask_t;
+
+
+/**
  * @enum    DIO_Err_t
  * @brief   Enumeration of the different DIO driver function return error codes.
  */
@@ -35,6 +49,7 @@ typedef enum {
     DIO_ERR_INVALID_PARAM,      /*!< An input parameter had an invalid value */
     DIO_ERR_RESOURCE_BLOCKED,   /*!< The HW resource is currently blocked */
     DIO_ERR_INVALID_PIN,        /*!< The pin number is invalid */
+    DIO_ERR_PIN_CONFIG,         /*!< The pin configuration doesn't support the function/action */
     DIO_ERR_CALLBACK_CONFIG,    /*!< The callback configuration is invalid */
 } DIO_Err_t;
 
@@ -54,7 +69,7 @@ typedef enum {
  * @param[in]   pin         The pin number (not the GPIO pin mask defined by the HAL).
  * @param[in]   transition  The type of edge transition that triggered the external interrupt.
  */
-typedef void (*DIO_EXTICallback_t)(uint8_t pin, DIO_Transition_t transition);
+typedef void (*DIO_EXTICallback_t)(DIO_Pin_t pin, DIO_Transition_t transition);
 
 
 /**
@@ -68,7 +83,7 @@ typedef void (*DIO_EXTICallback_t)(uint8_t pin, DIO_Transition_t transition);
  */
 typedef struct {
     GPIO_TypeDef *portHandle;
-    uint8_t pin;
+    DIO_Pin_t pin;
     DIO_EXTICallback_t extiCallback;
 } DIO;
 
@@ -90,7 +105,7 @@ typedef struct {
 
 /* External functions ----------------------------------------------------------------------------*/
 
-DIO DIO_ctor(GPIO_TypeDef *const portHandle, uint8_t pin, DIO_EXTICallback_t extiCallback);
+DIO DIO_ctor(GPIO_TypeDef *const portHandle, DIO_Pin_t pin, DIO_EXTICallback_t extiCallback);
 DIO_Err_t DIO_Init(DIO const *const self);
 DIO_Err_t DIO_EnableCallback(DIO const *const self, bool enable);
 DIO_Err_t DIO_SetHigh(DIO const *const self);
@@ -98,7 +113,9 @@ DIO_Err_t DIO_SetLow(DIO const *const self);
 DIO_Err_t DIO_Toggle(DIO const *const self);
 bool DIO_IsSetHigh(DIO const *const self);
 bool DIO_IsSetLow(DIO const *const self);
-uint8_t DIO_GetPin(uint16_t pinMask);
+bool DIO_IsDigitalInput(DIO const *const self);
+bool DIO_IsDigitalOutput(DIO const *const self);
+DIO_Pin_t DIO_GetPin(DIO_PinMask_t pinMask);
 
 
 #ifdef __cplusplus

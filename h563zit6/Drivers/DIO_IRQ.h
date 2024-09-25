@@ -56,9 +56,9 @@ typedef enum {
 /* External functions ----------------------------------------------------------------------------*/
 
 DIO_IRQ_Err_t DIO_IRQ_Init(void);
-DIO_IRQ_Err_t DIO_IRQ_Register(uint8_t pin, DIO_EXTICallback_t callback);
-DIO_IRQ_Err_t DIO_IRQ_Enable(uint8_t pin, bool enable);
-bool DIO_IRQ_IsEnabled(uint8_t pin);
+DIO_IRQ_Err_t DIO_IRQ_Register(DIO_Pin_t pin, DIO_EXTICallback_t callback);
+DIO_IRQ_Err_t DIO_IRQ_Enable(DIO_Pin_t pin, bool enable);
+bool DIO_IRQ_IsEnabled(DIO_Pin_t pin);
 
 
 #ifdef __cplusplus

@@ -42,12 +42,37 @@ static DIO inputPC11;
 static DIO inputPC12;
 
 
+/* Internal constants ----------------------------------------------------------------------------*/
+
+static DIO *const DIOPtrTable[] = {
+    [ 0] = &ld1,
+    [ 1] = &ld2,
+    [ 2] = &ld3,
+    [ 3] = &userButton,
+    [ 4] = &inputPC0,
+    [ 5] = &inputPC1,
+    [ 6] = &inputPC2,
+    [ 7] = &inputPC3,
+    [ 8] = &inputPC4,
+    [ 9] = &inputPC5,
+    [10] = &inputPC6,
+    [11] = &inputPC7,
+    [12] = &inputPC8,
+    [13] = &inputPC9,
+    [14] = &inputPC10,
+    [15] = &inputPC11,
+    [16] = &inputPC12,
+};
+
+static uint8_t DIOPtrTableSize = sizeof(DIOPtrTable) / sizeof(DIOPtrTable[0]);
+
+
 /* Internal function prototypes ------------------------------------------------------------------*/
 
 
 /* Internal functions ----------------------------------------------------------------------------*/
 
-void userButtonCallback(uint8_t pin, DIO_Transition_t transition) {
+void userButtonCallback(DIO_Pin_t pin, DIO_Transition_t transition) {
     if (transition == DIO_TRANSITION_FALLING_EDGE) {
         DIO_SetLow(&ld3);
     } else if (transition == DIO_TRANSITION_RISING_EDGE) {
@@ -56,7 +81,7 @@ void userButtonCallback(uint8_t pin, DIO_Transition_t transition) {
 }
 
 
-void generalIOCallback(uint8_t pin, DIO_Transition_t transition) {
+void generalIOCallback(DIO_Pin_t pin, DIO_Transition_t transition) {
     printf("callback; pin=%u; transition=%u\n", pin, transition);
 }
 
@@ -102,6 +127,14 @@ static void init(void) {
     printf("    DIO_SetLow(&ld3)=%u\n", err);
     err = DIO_Init(&userButton);
     printf("    DIO_Init(&userButton)=%u\n", err);
+
+    // check the pin types
+    for (uint8_t index = 0u; index < DIOPtrTableSize; ++index) {
+        bool output = DIO_IsDigitalOutput(DIOPtrTable[index]);
+        bool input = DIO_IsDigitalInput(DIOPtrTable[index]);
+        printf("    type[%u]; output=%u; input=%u\n", index, output, input);
+    }
+
 }
 
 

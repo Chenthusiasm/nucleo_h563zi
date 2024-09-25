@@ -104,9 +104,9 @@ static const osMutexAttr_t mutex_attributes = {
  * @param[in]   pinMask     Bit mask of the GPIO pin number (where 0x00 = pin 0)
  * @param[in]   transition  The DIO_Transition_t transition.
  */
-static void handleEXTICallback(DIO_IRQ const *const self, uint16_t pinMask,
+static void handleEXTICallback(DIO_IRQ const *const self, DIO_PinMask_t pinMask,
                                DIO_Transition_t transition) {
-    uint8_t pin = DIO_GetPin(pinMask);
+    DIO_Pin_t pin = DIO_GetPin(pinMask);
     if (pin >= NUM_EXTI) {
         return;
     }
@@ -154,7 +154,7 @@ DIO_IRQ_Err_t DIO_IRQ_Init(void) {
  *          couldn't be executed successfully. If the function executes successfully,
  *          DIO_IRQ_ERR_NONE.
  */
-DIO_IRQ_Err_t DIO_IRQ_Register(uint8_t pin, DIO_EXTICallback_t callback) {
+DIO_IRQ_Err_t DIO_IRQ_Register(DIO_Pin_t pin, DIO_EXTICallback_t callback) {
     if (self.initialized == false) {
         return DIO_IRQ_ERR_UNINITIALIZED;
     }
@@ -185,7 +185,7 @@ DIO_IRQ_Err_t DIO_IRQ_Register(uint8_t pin, DIO_EXTICallback_t callback) {
  *          couldn't be executed successfully. If the function executes successfully,
  *          DIO_IRQ_ERR_NONE.
  */
-DIO_IRQ_Err_t DIO_IRQ_Enable(uint8_t pin, bool enable) {
+DIO_IRQ_Err_t DIO_IRQ_Enable(DIO_Pin_t pin, bool enable) {
     if (pin >= NUM_EXTI) {
         return DIO_IRQ_ERR_INVALID_PARAM;
     }
@@ -207,7 +207,7 @@ DIO_IRQ_Err_t DIO_IRQ_Enable(uint8_t pin, bool enable) {
  * @param[in]   pin     The pin number (not the GPIO pin mask defined by the HAL).
  * @return  If the interrupt is enabled for the specified pin, true; otherwise false.
  */
-bool DIO_IRQ_IsEnabled(uint8_t pin) {
+bool DIO_IRQ_IsEnabled(DIO_Pin_t pin) {
     if (pin >= NUM_EXTI) {
         return false;
     }
@@ -231,7 +231,7 @@ bool DIO_IRQ_IsEnabled(uint8_t pin) {
  *          transitions from low to high (rising).
  * @param   GPIO_Pin    Bit mask of the GPIO pin number (where 0x00 = pin 0)
  */
-void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
+void HAL_GPIO_EXTI_Rising_Callback(DIO_PinMask_t GPIO_Pin) {
     handleEXTICallback(&self, GPIO_Pin, DIO_TRANSITION_RISING_EDGE);
 }
 
@@ -247,6 +247,6 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
  *          transitions from high to low (falling).
  * @param   GPIO_Pin    Bit mask of the GPIO pin number (where 0x00 = pin 0)
  */
-void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
+void HAL_GPIO_EXTI_Falling_Callback(DIO_PinMask_t GPIO_Pin) {
     handleEXTICallback(&self, GPIO_Pin, DIO_TRANSITION_FALLING_EDGE);
 }

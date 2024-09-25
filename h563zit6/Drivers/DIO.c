@@ -13,6 +13,7 @@
 
 #include "DIO.h"
 #include "DIO_IRQ.h"
+#include "stm32h5xx_ll_gpio.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -33,7 +34,7 @@
 /* Internal constants ----------------------------------------------------------------------------*/
 
 /* Map/lookup table of the pin number to GPIO pin mask used by the HAL. */
-static uint16_t const GPIOPinMaskMap[] = {
+static DIO_PinMask_t const GPIOPinMaskMap[] = {
     [ 0] = GPIO_PIN_0,
     [ 1] = GPIO_PIN_1,
     [ 2] = GPIO_PIN_2,
@@ -72,7 +73,7 @@ static uint16_t const GPIOPinMaskMap[] = {
  *                              configured transition is externally triggered.
  * @return  The new DIO struct (to be copied upon assignment).
  */
-DIO DIO_ctor(GPIO_TypeDef *const portHandle, uint8_t pin, DIO_EXTICallback_t extiCallback) {
+DIO DIO_ctor(GPIO_TypeDef *const portHandle, DIO_Pin_t pin, DIO_EXTICallback_t extiCallback) {
     assert(portHandle != NULL);
     assert(pin < PORT_NUM_PINS);
 
@@ -86,7 +87,7 @@ DIO DIO_ctor(GPIO_TypeDef *const portHandle, uint8_t pin, DIO_EXTICallback_t ext
 
 
 /**
- * @brief   Initializes the DIO instance.
+ * @brief   Initializes the DIO instance and registers the external interrupt.
  * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
  * @return  The specific DIO_Err_t which indicates the specific error code if the function couldn't
  *          be executed successfully. If the function executes successfully, DIO_ERR_NONE.
@@ -96,6 +97,9 @@ DIO_Err_t DIO_Init(DIO const *const self) {
 
     if (self->extiCallback == NULL) {
         return DIO_ERR_NONE;
+    }
+    if (DIO_IsDigitalInput(self) != true) {
+        return DIO_ERR_PIN_CONFIG;
     }
     DIO_IRQ_Err_t err = DIO_IRQ_Register(self->pin, self->extiCallback);
     switch (err) {
@@ -121,6 +125,9 @@ DIO_Err_t DIO_Init(DIO const *const self) {
 DIO_Err_t DIO_EnableCallback(DIO const *const self, bool enable) {
     assert(self != NULL);
 
+    if (DIO_IsDigitalInput(self) != true) {
+        return DIO_ERR_PIN_CONFIG;
+    }
     DIO_IRQ_Err_t err = DIO_IRQ_Enable(self->pin, enable);
     if (err == DIO_IRQ_ERR_INVALID_PARAM) {
         return DIO_ERR_INVALID_PIN;
@@ -147,6 +154,9 @@ DIO_Err_t DIO_SetHigh(DIO const *const self) {
     if (self->pin >= PORT_NUM_PINS) {
         return DIO_ERR_INVALID_PIN;
     }
+    if (DIO_IsDigitalOutput(self) != true) {
+        return DIO_ERR_PIN_CONFIG;
+    }
     HAL_GPIO_WritePin(self->portHandle, GPIOPinMaskMap[self->pin], GPIO_PIN_SET);
     return DIO_ERR_NONE;
 }
@@ -162,6 +172,9 @@ DIO_Err_t DIO_SetLow(DIO const *const self) {
     if (self->pin >= PORT_NUM_PINS) {
         return DIO_ERR_INVALID_PIN;
     }
+    if (DIO_IsDigitalOutput(self) != true) {
+        return DIO_ERR_PIN_CONFIG;
+    }
     HAL_GPIO_WritePin(self->portHandle, GPIOPinMaskMap[self->pin], GPIO_PIN_RESET);
     return DIO_ERR_NONE;
 }
@@ -176,6 +189,9 @@ DIO_Err_t DIO_Toggle(DIO const *const self) {
 
     if (self->pin >= PORT_NUM_PINS) {
         return DIO_ERR_INVALID_PIN;
+    }
+    if (DIO_IsDigitalOutput(self) != true) {
+        return DIO_ERR_PIN_CONFIG;
     }
     HAL_GPIO_TogglePin(self->portHandle, GPIOPinMaskMap[self->pin]);
     return DIO_ERR_NONE;
@@ -213,13 +229,37 @@ bool DIO_IsSetLow(DIO const *const self) {
 
 
 /**
+ * @brief   Check if the DIO pin is configured for digital input.
+ * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
+ * @return  If the DIO pin is configured for digital input, true; otherwise, false.
+ */
+bool DIO_IsDigitalInput(DIO const *const self) {
+    assert(self != NULL);
+
+    return (LL_GPIO_GetPinMode(self->portHandle, GPIOPinMaskMap[self->pin]) == LL_GPIO_MODE_INPUT);
+}
+
+
+/**
+ * @brief   Check if the DIO pin is configured for digital output.
+ * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
+ * @return  If the DIO pin is configured for digital output, true; otherwise, false.
+ */
+bool DIO_IsDigitalOutput(DIO const *const self) {
+    assert(self != NULL);
+
+    return (LL_GPIO_GetPinMode(self->portHandle, GPIOPinMaskMap[self->pin]) == LL_GPIO_MODE_OUTPUT);
+}
+
+
+/**
  * @brief   Converts the HAL pin mask to the pin number.
  * @param[in]   pinMask The HAL pin mask.
  * @return  The HAL pin mask converted into the pin number; if the pin mask is invalid,
  *          return DIO_INVALID_PIN.
  */
-uint8_t DIO_GetPin(uint16_t pinMask) {
-    uint8_t pin = DIO_INVALID_PIN;
+DIO_Pin_t DIO_GetPin(DIO_PinMask_t pinMask) {
+    DIO_Pin_t pin = DIO_INVALID_PIN;
     switch (pinMask) {
     case GPIO_PIN_0 : pin =  0u; break;
     case GPIO_PIN_1 : pin =  1u; break;
