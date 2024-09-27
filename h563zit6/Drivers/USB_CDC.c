@@ -1,6 +1,15 @@
 /**
  * @file    USB_CDC.c
  * @brief   Implementation for the USB CDC (communications device class) driver.
+ * @note    The driver is reentrant from the defined structures; the driver may not be reentrant
+ *          if different instances of the structures are constructed using the same HW peripherals,
+ *          specifically the USB peripheral.
+ * @note    The driver is implemented as a singleton.
+ * @note    In order to use the USB_CDC driver, the classic USB device middleware with CDC support
+ *          must be added to the project. Also, disable the STM32CubeMX auto-generation of the USB
+ *          code.
+ * @note    If the ICACHE is enabled, the ICACHE_Support module must be included to deal with
+ *          avoiding hard faults when accessing RO and OTP memory.
  * @section Legal Disclaimer
  *      ©2024 Whisker, All rights reserved. All contents of this source file and/or any other
  *      related source files are the explicit property of Whisker. Do not distribute. Do not copy.
@@ -11,6 +20,7 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "ICACHE_Support.h"
 #include "usbd_cdc_if.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
@@ -157,6 +167,9 @@ static USB_CDC_Err_t initUSBD(PCD_HandleTypeDef *const pcdHandle,
 USB_CDC_Err_t USB_CDC_Init(void) {
     if (self.initialized == true) {
         return USB_CDC_ERR_NONE;
+    }
+    if (ICACHE_Init() != true) {
+        return USB_CDC_ERR_HAL_FAIL;
     }
     USB_CDC_Err_t err = initUSBD(&self.pcdHandle, &self.usbdHandle);
     if (err != USB_CDC_ERR_NONE) {

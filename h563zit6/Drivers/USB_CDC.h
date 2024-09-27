@@ -3,8 +3,13 @@
  * @brief   Interface file for the USB CDC (communications device class) driver.
  * @note    The driver is reentrant from the defined structures; the driver may not be reentrant
  *          if different instances of the structures are constructed using the same HW peripherals,
- *          specifically the USB peripheral. To ensure reentrancy, the Mutex module must be
- *          configured to use an RTOS mutex.
+ *          specifically the USB peripheral.
+ * @note    The driver is implemented as a singleton.
+ * @note    In order to use the USB_CDC driver, the classic USB device middleware with CDC support
+ *          must be added to the project. Also, disable the STM32CubeMX auto-generation of the USB
+ *          code.
+ * @note    If the ICACHE is enabled, the ICACHE_Support module must be included to deal with
+ *          avoiding hard faults when accessing RO and OTP memory.
  * @section Legal Disclaimer
  *      ©2024 Whisker, All rights reserved. All contents of this source file and/or any other
  *      related source files are the explicit property of Whisker. Do not distribute. Do not copy.

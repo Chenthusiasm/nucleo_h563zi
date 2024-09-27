@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os2.h"
-#include "icache.h"
 #include "memorymap.h"
 #include "usart.h"
 #include "usb.h"
@@ -92,9 +91,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ICACHE_Init();
   MX_USART3_UART_Init();
-  MX_USB_PCD_Init();
   /* USER CODE BEGIN 2 */
   CLI_INIT(&huart3, USART3_IRQn);
   /* USER CODE END 2 */
