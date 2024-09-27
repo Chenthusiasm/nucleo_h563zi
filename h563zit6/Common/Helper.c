@@ -9,6 +9,7 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -86,4 +87,45 @@ uint32_t UIntCeilingDivide(uint32_t dividend, uint32_t divisor) {
 
     uint32_t round = divisor - 1u;
     return UIntDivideWithRound(dividend, divisor, round);
+}
+
+
+/**
+ * @brief   Clears the rightmost (least significant) bit that is set.
+ * @param   n   The number to clear the rightmost bit that is set.
+ * @return  The number with the rightmost set bit cleared.
+ */
+uint32_t ClearRightmostSetBit(uint32_t n) {
+    return (n & (n - 1u));
+}
+
+
+/**
+ * @brief   Checks if an unsigned number is a power of two.
+ * @param[in]   n   The number to check.
+ * @note    This function is O(1) time and space complexity.
+ * @return  If the number is a power of two, true; otherwise, false.
+ */
+bool IsPowerOfTwo(uint32_t n) {
+    return (ClearRightmostSetBit(n) == 0u);
+}
+
+
+/**
+ * @brief   Gets the bit position of the rightmost set bit.
+ * @param[in]   n   The number to find the rightmost set bit.
+ * @note    This function is O(1) space and O(number of bits in n) time complexity.
+ * @note    n = 0x0001, return 0
+ *          n = 0x0002, return
+ * @return  The bit position of the rightmost set bit; if n = 0, return 0.
+ */
+uint8_t RightmostSetBit(uint32_t n) {
+    uint32_t mask = ClearRightmostSetBit(n);
+    n ^= mask;
+    uint8_t position = 0;
+    while (n != 0) {
+        n >>= 1u;
+        position++;
+    }
+    return position;
 }
