@@ -33,12 +33,7 @@ static Mutex mutex1;
 /* Internal functions ----------------------------------------------------------------------------*/
 
 static void initMutex(void) {
-    printf("initMutex()\n");
-    mutex0 = Mutex_ctor(NULL);
-    mutex1 = Mutex_ctor(NULL);
-
-//    mutex0 = Mutex_ctor();
-//    mutex1 = Mutex_ctor();
+    ;
 }
 
 static void printMutexAquiredState(void) {
@@ -56,6 +51,7 @@ static void printResult(char const* function, bool result) {
 void MainAppTask_Start(void *argument) {
     initMutex();
     for (;;) {
+#if 0
         bool result;
         printf(">>> [%lu] start [line=%d]\n", osKernelGetTickCount(), __LINE__);
         printMutexAquiredState();
@@ -111,9 +107,17 @@ void MainAppTask_Start(void *argument) {
         printMutexAquiredState();
         osDelay(RTOS_ConvertMSToTicks(FINAL_DELAY_MS));
         printf("\n");
-
-//        printf(">>> [%lu] NULL [line=%d]\n", osKernelGetTickCount(), __LINE__);
-//        result = Mutex_Acquire(NULL, MUTEX_TIMEOUT_MS);
-//        printResult("Mutex_Acquire(NULL)", result);
+#else
+        osDelay(RTOS_ConvertMSToTicks(1u));
+#endif
     }
 }
+
+
+/**
+ *  @brief Initialization for the MainApp task.
+ */
+void MainAppTask_init(void) {
+    ;
+}
+

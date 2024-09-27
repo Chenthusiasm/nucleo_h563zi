@@ -160,16 +160,21 @@ static USB_CDC_Err_t initUSBD(PCD_HandleTypeDef *const pcdHandle,
 
 /**
  * @brief   Initializes the USB CDC driver singleton.
+ * @param[in]   receiveCallback
  * @return  The specific USB_CDC_Err_t which indicates the specific error code if the function
  *          couldn't be executed successfully. If the function executes successfully,
  *          USB_CDC_ERR_NONE.
  */
-USB_CDC_Err_t USB_CDC_Init(void) {
+USB_CDC_Err_t USB_CDC_Init(USB_CDC_ReceiveCallback_t receiveCallback) {
     if (self.initialized == true) {
         return USB_CDC_ERR_NONE;
     }
     if (ICACHE_Init() != true) {
         return USB_CDC_ERR_HAL_FAIL;
+    }
+    if (receiveCallback != NULL) {
+        self.receiveCallback = receiveCallback;
+        USBD_CDC_RegisterReceiveCallback(self.receiveCallback);
     }
     USB_CDC_Err_t err = initUSBD(&self.pcdHandle, &self.usbdHandle);
     if (err != USB_CDC_ERR_NONE) {
@@ -195,6 +200,7 @@ USB_CDC_Err_t USB_CDC_Deinit(void) {
     if (err != USB_CDC_ERR_NONE) {
         return err;
     }
+    self.receiveCallback = NULL;
     self.initialized = false;
     return USB_CDC_ERR_NONE;
 }

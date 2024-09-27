@@ -26,7 +26,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "sys_command_line.h"
+#include "DiagnosticsTask.h"
+#include "MainAppTask.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -93,7 +94,8 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  CLI_INIT(&huart3, USART3_IRQn);
+  MainAppTask_init();
+  DiagnosticsTask_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -111,7 +113,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	CLI_RUN();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

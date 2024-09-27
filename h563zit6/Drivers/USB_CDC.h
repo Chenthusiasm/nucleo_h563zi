@@ -78,7 +78,7 @@ typedef uint16_t (*USB_CDC_ReceiveCallback_t)(uint8_t *const buffer, uint16_t le
 
 /* External functions ----------------------------------------------------------------------------*/
 
-USB_CDC_Err_t USB_CDC_Init(void);
+USB_CDC_Err_t USB_CDC_Init(USB_CDC_ReceiveCallback_t receiveCallback);
 USB_CDC_Err_t USB_CDC_Deinit(void);
 USB_CDC_Err_t USB_CDC_Transmit(uint8_t *const buffer, uint16_t length);
 
