@@ -14,6 +14,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------------------------- */
 
+#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -36,6 +37,9 @@ extern "C" {
 
 uint32_t UIntRoundingDivide(uint32_t dividend, uint32_t divisor);
 uint32_t UIntCeilingDivide(uint32_t dividend, uint32_t divisor);
+uint32_t ClearRightmostSetBit(uint32_t n);
+bool IsPowerOfTwo(uint32_t n);
+uint8_t RightmostSetBit(uint32_t n);
 
 
 #ifdef __cplusplus
