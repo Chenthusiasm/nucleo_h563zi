@@ -4,7 +4,7 @@
 #include "RTOS.h"
 #include "sys_command_line.h"
 #include "usart.h"
-#include "USB_CDC.h"
+#include "usbd_cdc_if.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -39,6 +39,18 @@ static void processUSB(void) {
 }
 
 
+static uint16_t usbReceiveCallback(uint8_t *const buffer, uint16_t length) {
+    if (buffer == NULL) {
+        return 0u;
+    }
+    if (length == 0u) {
+        return 0u;
+    }
+    printf("%s", (char*)buffer);
+    return length;
+}
+
+
 /* External functions ----------------------------------------------------------------------------*/
 
 /**
@@ -64,6 +76,8 @@ void DiagnosticsTask_Start(void *argument) {
  */
 void DiagnosticsTask_init(void) {
     CLI_INIT(&huart3, USART3_IRQn);
-    USB_CDC_Err_t err = USB_CDC_Init(NULL);
-    printf("USB_CDC_Init()=%u\n", err);
+    USBD_StatusTypeDef status = USB_CDC_Init();
+    printf("USB_CDC_Init()=%u\n", status);
+    status = USB_CDC_RegisterReceiveCallback(usbReceiveCallback);
+    printf("USB_CDC_RegisterReceiveCallback()=%u\n", status);
 }
