@@ -27,6 +27,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "DiagnosticsTask.h"
+#include "MainAppTask.h"
 #include "sys_command_line.h"
 /* USER CODE END Includes */
 
@@ -96,7 +98,8 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_PCD_Init();
   /* USER CODE BEGIN 2 */
-  CLI_INIT(&huart3, USART3_IRQn);
+  MainAppTask_Init();
+  DiagnosticsTask_Init();
   /* USER CODE END 2 */
 
   /* Init scheduler */

@@ -48,7 +48,7 @@ typedef StaticSemaphore_t osStaticMutexDef_t;
 /* USER CODE END Variables */
 /* Definitions for MainAppTask */
 osThreadId_t MainAppTaskHandle;
-uint32_t MainAppTaskBuffer[ 128 ];
+uint32_t MainAppTaskBuffer[ 256 ];
 osStaticThreadDef_t MainAppTaskCB;
 const osThreadAttr_t MainAppTask_attributes = {
   .name = "MainAppTask",
@@ -60,7 +60,7 @@ const osThreadAttr_t MainAppTask_attributes = {
 };
 /* Definitions for DiagnosticsTask */
 osThreadId_t DiagnosticsTaskHandle;
-uint32_t DiagnosticsTaskBuffer[ 256 ];
+uint32_t DiagnosticsTaskBuffer[ 1024 ];
 osStaticThreadDef_t DiagnosticsTaskCB;
 const osThreadAttr_t DiagnosticsTask_attributes = {
   .name = "DiagnosticsTask",

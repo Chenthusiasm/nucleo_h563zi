@@ -16,6 +16,7 @@
 #define MUTEX_TIMEOUT_MS                (5u)
 #define DELAY_MS                        (500u)
 #define FINAL_DELAY_MS                  (2000u)
+#define LONG_DELAY_MS                   (5000u)
 
 
 /* Internal macro --------------------------------------------------------------------------------*/
@@ -33,12 +34,14 @@ static Mutex mutex1;
 /* Internal functions ----------------------------------------------------------------------------*/
 
 static void initMutex(void) {
+#if 0
     printf("initMutex()\n");
     mutex0 = Mutex_ctor(NULL);
     mutex1 = Mutex_ctor(NULL);
 
 //    mutex0 = Mutex_ctor();
 //    mutex1 = Mutex_ctor();
+#endif
 }
 
 static void printMutexAquiredState(void) {
@@ -53,7 +56,14 @@ static void printResult(char const* function, bool result) {
 
 /* External functions ----------------------------------------------------------------------------*/
 
+/**
+ *  @brief  The main entry point for the Main App task.
+ *  The main entry point for the Main App task. At the moment, the Main App task is only used to
+ *  test the driver code.
+ *  @param[in]  argument    TODO
+ */
 void MainAppTask_Start(void *argument) {
+#if 0
     initMutex();
     for (;;) {
         bool result;
@@ -116,4 +126,19 @@ void MainAppTask_Start(void *argument) {
 //        result = Mutex_Acquire(NULL, MUTEX_TIMEOUT_MS);
 //        printResult("Mutex_Acquire(NULL)", result);
     }
+#else
+    uint32_t count = 0u;
+    for (;;) {
+        printf("MainAppTask[%lu]\n", count++);
+        osDelay(RTOS_ConvertMSToTicks(LONG_DELAY_MS));
+    }
+#endif
+}
+
+
+/**
+ *  @brief Initialization for the MainApp task.
+ */
+void MainAppTask_Init(void) {
+    ;
 }
