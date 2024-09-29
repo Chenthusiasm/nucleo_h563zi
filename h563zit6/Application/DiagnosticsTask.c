@@ -1,7 +1,7 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
 #include "app_freertos.h"
-#include "icache.h"
+#include "ICACHE.h"
 #include "RTOS.h"
 #include "sys_command_line.h"
 #include "usart.h"
@@ -68,7 +68,7 @@ void DiagnosticsTask_Start(void *argument) {
  */
 void DiagnosticsTask_Init(void) {
     CLI_INIT(&huart3, USART3_IRQn);
-    MX_ICACHE_Init();
+    ICACHE_Init();
     MX_USB_PCD_Init();
     USBD_CDC_RegisterReceiveCallback(usbReceiveCallback);
 }
