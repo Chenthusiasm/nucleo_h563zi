@@ -1,52 +1,44 @@
-/* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    usb.h
-  * @brief   This file contains all the function prototypes for
-  *          the usb.c file
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USB_H__
-#define __USB_H__
+ * @file    usb.h
+ * @brief   Interface file for USB.
+ * @note    This file is a placeholder in the case where there the STM32CubeMX is not used to
+ *          generate code for the USB component.
+ * @note    See "usbd_cdc_if.h" in the Libraries/stm32_mw_usb_device/ for the actual interface for
+ *          the USB CDC (communications device class).
+ * @section Legal Disclaimer
+ *      ©2024 Whisker, All rights reserved. All contents of this source file and/or any other
+ *      related source files are the explicit property of Whisker. Do not distribute. Do not copy.
+ */
+#ifndef USB_H_
+#define USB_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
-#include "main.h"
+/* Includes ------------------------------------------------------------------------------------- */
 
-/* USER CODE BEGIN Includes */
 
-/* USER CODE END Includes */
+/* External typedef ------------------------------------------------------------------------------*/
 
-extern PCD_HandleTypeDef hpcd_USB_DRD_FS;
 
-/* USER CODE BEGIN Private defines */
+/* Defines ---------------------------------------------------------------------------------------*/
 
-/* USER CODE END Private defines */
 
-void MX_USB_PCD_Init(void);
+/* External macro --------------------------------------------------------------------------------*/
 
-/* USER CODE BEGIN Prototypes */
 
-/* USER CODE END Prototypes */
+/* External variables ----------------------------------------------------------------------------*/
+
+
+/* External function prototypes ------------------------------------------------------------------*/
+
+
+/* External functions ----------------------------------------------------------------------------*/
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __USB_H__ */
-
+#endif /* USB_H_ */

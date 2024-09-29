@@ -5,7 +5,6 @@
 #include "RTOS.h"
 #include "sys_command_line.h"
 #include "usart.h"
-#include "usb.h"
 #include "usbd_cdc_if.h"
 
 
@@ -28,19 +27,16 @@
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 static void processUSB(void) {
-    if (hUsbDeviceFS.pClassData == NULL) {
-        return;
-    }
     static uint16_t count = 0u;
     if (count++ > 2000u) {
         static uint8_t const txMessageBuffer[] = "My USB is working!\n";
-        USBD_CDC_Transmit(txMessageBuffer, sizeof(txMessageBuffer));
+        USB_CDC_Transmit(txMessageBuffer, sizeof(txMessageBuffer));
         count = 0u;
     }
 }
 
 
-static size_t usbReceiveCallback(uint8_t* const Buf, size_t Len) {
+static uint16_t usbReceiveCallback(uint8_t* const Buf, uint16_t Len) {
     printf("%s", Buf);
     return Len;
 }
@@ -69,6 +65,6 @@ void DiagnosticsTask_Start(void *argument) {
 void DiagnosticsTask_Init(void) {
     CLI_INIT(&huart3, USART3_IRQn);
     ICACHE_Init();
-    MX_USB_PCD_Init();
-    USBD_CDC_RegisterReceiveCallback(usbReceiveCallback);
+    USBD_StatusTypeDef status = USB_CDC_Init();
+    USB_CDC_RegisterReceiveCallback(usbReceiveCallback);
 }
