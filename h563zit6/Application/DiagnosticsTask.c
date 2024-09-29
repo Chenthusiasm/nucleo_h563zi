@@ -53,7 +53,7 @@ static uint16_t usbReceiveCallback(uint8_t* const Buf, uint16_t Len) {
 void DiagnosticsTask_Start(void *argument) {
     for (;;) {
         CLI_RUN();
-        processUSB();
+        //processUSB();
         osDelay(RTOS_ConvertMSToTicks(1u));
     }
 }
@@ -63,8 +63,9 @@ void DiagnosticsTask_Start(void *argument) {
  *  @brief  Initialization for the Diagnostics task.
  */
 void DiagnosticsTask_Init(void) {
-    CLI_INIT(&huart3, USART3_IRQn);
+    //CLI_INIT(&huart3, USART3_IRQn);
     ICACHE_Init();
     USBD_StatusTypeDef status = USB_CDC_Init();
-    USB_CDC_RegisterReceiveCallback(usbReceiveCallback);
+    CLI_INIT();
+    //USB_CDC_RegisterReceiveCallback(usbReceiveCallback);
 }

@@ -325,6 +325,10 @@ USBD_StatusTypeDef USB_CDC_Deinit(void) {
  */
 USBD_StatusTypeDef USB_CDC_Transmit(uint8_t* const buffer, uint16_t length) {
     USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)self.usbdHandle.pClassData;
+    if (hcdc == NULL) {
+        // no USB connection
+        return USBD_EMEM;
+    }
     if (hcdc->TxState != 0) {
         return USBD_BUSY;
     }

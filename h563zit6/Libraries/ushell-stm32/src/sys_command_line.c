@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file:      sys_command_line.c
   * @author:    Cat
-  * @author: 	Morgan Diepart
+  * @author:    Morgan Diepart
   * @version:   V1.0
   * @date:      2022-08-24
   * @brief:     command line
@@ -18,9 +18,16 @@
 #include <stdlib.h>
 #include "../inc/sys_command_line.h"
 
+#if CLI_ENABLE_USB
+#include "app_freertos.h"
+#include "RTOS.h"
+#include "usbd_cdc_if.h"
+#include "usbd_core.h"
+#endif /* CLI_ENABLE_USB */
+
 /*******************************************************************************
  *
- * 	Typedefs
+ *  Typedefs
  *
  ******************************************************************************/
 
@@ -54,19 +61,19 @@ typedef struct {
 
 /*******************************************************************************
  *
- * 	Internal variables
+ *  Internal variables
  *
  ******************************************************************************/
 
-unsigned char 			cBuffer;
-shell_queue_s 			cli_rx_buff; 				/* 64 bytes FIFO, saving commands from the terminal */
-UART_HandleTypeDef 		*huart_shell;
-COMMAND_S				CLI_commands[MAX_COMMAND_NB];
-static HISTORY_S 		history;
+unsigned char           cBuffer;
+shell_queue_s           cli_rx_buff;                /* 64 bytes FIFO, saving commands from the terminal */
+UART_HandleTypeDef      *huart_shell;
+COMMAND_S               CLI_commands[MAX_COMMAND_NB];
+static HISTORY_S        history;
 char *cli_logs_names[] = {"SHELL",
 #ifdef CLI_ADDITIONAL_LOG_CATEGORIES
 #define X(name, b) #name,
-		CLI_ADDITIONAL_LOG_CATEGORIES
+        CLI_ADDITIONAL_LOG_CATEGORIES
 #undef X
 #endif
 };
@@ -74,107 +81,147 @@ char *cli_logs_names[] = {"SHELL",
 uint32_t cli_log_stat = 0
 #ifdef CLI_ADDITIONAL_LOG_CATEGORIES
 #define X(name, b) | (b<<CLI_LOG_##name)
-		CLI_ADDITIONAL_LOG_CATEGORIES
+        CLI_ADDITIONAL_LOG_CATEGORIES
 #undef X
 #endif
 ;
 
-const char 				cli_help_help[] 			= "show commands";
-const char 				cli_clear_help[] 			= "clear the screen";
-const char 				cli_reset_help[] 			= "reboot MCU";
-const char				cli_log_help[]				= "Controls which logs are displayed."
-													  "\n\t\"log show\" to show which logs are enabled"
-													  "\n\t\"log on/off all\" to enable/disable all logs"
-													  "\n\t\"log on/off [CAT1 CAT2 CAT...]\" to enable/disable the logs for categories [CAT1 CAT2 CAT...]";
-bool 					cli_password_ok 			= false;
-volatile bool			cli_tx_isr_flag				= false; /*< This flag is used internally so that _write will not write text in the console if the previous call is not over yet */
-uint8_t					shell_USART_IRQn			= 0;
+const char              cli_help_help[]             = "show commands";
+const char              cli_clear_help[]            = "clear the screen";
+const char              cli_reset_help[]            = "reboot MCU";
+const char              cli_log_help[]              = "Controls which logs are displayed."
+#if !CLI_ENABLE_CRLF
+                                                      "\n\t\"log show\" to show which logs are enabled"
+                                                      "\n\t\"log on/off all\" to enable/disable all logs"
+                                                      "\n\t\"log on/off [CAT1 CAT2 CAT...]\" to enable/disable the logs for categories [CAT1 CAT2 CAT...]";
+#else
+                                                      "\r\n\t\"log show\" to show which logs are enabled"
+                                                      "\r\n\t\"log on/off all\" to enable/disable all logs"
+                                                      "\r\n\t\"log on/off [CAT1 CAT2 CAT...]\" to enable/disable the logs for categories [CAT1 CAT2 CAT...]";
+#endif /* !CLI_ENABLE_CRLF */
+bool                    cli_password_ok             = false;
+volatile bool           cli_tx_isr_flag             = false; /*< This flag is used internally so that _write will not write text in the console if the previous call is not over yet */
+uint8_t                 shell_USART_IRQn            = 0;
 /*******************************************************************************
  *
- * 	Internal functions declaration
+ *  Internal functions declaration
  *
  ******************************************************************************/
 
-static void 	cli_history_add				(char* buff);
-static uint8_t 	cli_history_show			(uint8_t mode, char** p_history);
-void 			HAL_UART_RxCpltCallback		(UART_HandleTypeDef * huart);
-static void 	cli_rx_handle				(shell_queue_s *rx_buff);
-static void 	cli_tx_handle				(void);
-uint8_t 		cli_help					(int argc, char *argv[]);
-uint8_t 		cli_clear					(int argc, char *argv[]);
-uint8_t 		cli_reset					(int argc, char *argv[]);
-uint8_t 		cli_log						(int argc, char *argv[]);
-void 			cli_add_command				(const char *command, const char *help, uint8_t (*exec)(int argc, char *argv[]));
-void 			__attribute__((weak)) greet	(void);
-void 			cli_disable_log_entry		(char *str);
-void 			cli_enable_log_entry		(char *str);
+static void     cli_history_add             (char* buff);
+static uint8_t  cli_history_show            (uint8_t mode, char** p_history);
+void            HAL_UART_RxCpltCallback     (UART_HandleTypeDef * huart);
+static void     cli_rx_handle               (shell_queue_s *rx_buff);
+static void     cli_tx_handle               (void);
+uint8_t         cli_help                    (int argc, char *argv[]);
+uint8_t         cli_clear                   (int argc, char *argv[]);
+uint8_t         cli_reset                   (int argc, char *argv[]);
+uint8_t         cli_log                     (int argc, char *argv[]);
+void            cli_add_command             (const char *command, const char *help, uint8_t (*exec)(int argc, char *argv[]));
+void            __attribute__((weak)) greet (void);
+void            cli_disable_log_entry       (char *str);
+void            cli_enable_log_entry        (char *str);
 
 /*******************************************************************************
  *
- * 	These functions need to be redefined over the [_weak] versions defined by
- * 	GCC (or in syscalls.c by cubeMX) to make the stdio library functional.
+ *  These functions need to be redefined over the [_weak] versions defined by
+ *  GCC (or in syscalls.c by cubeMX) to make the stdio library functional.
  *
  ******************************************************************************/
 
+#if !CLI_ENABLE_USB
 int _write(int file, char *data, int len){
-	if(file != STDOUT_FILENO && file != STDERR_FILENO){
-		errno = EBADF;
-		return -1;
-	}
+    if(file != STDOUT_FILENO && file != STDERR_FILENO){
+        errno = EBADF;
+        return -1;
+    }
 
-	if(cli_password_ok == false){
-		return len;
-	}
+    if(cli_password_ok == false){
+        return len;
+    }
 
-	HAL_StatusTypeDef status = HAL_OK;
+    HAL_StatusTypeDef status = HAL_OK;
 
-	if (!(SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) ) {
-		cli_tx_isr_flag = true;
-		/* Disable interrupts to prevent UART from throwing an RX interrupt while the peripheral is locked as
-		 * this would prevent the RX interrupt from restarting HAL_UART_Receive_IT  */
-		HAL_NVIC_DisableIRQ(shell_USART_IRQn);
+    if (!(SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) ) {
+        cli_tx_isr_flag = true;
+        /* Disable interrupts to prevent UART from throwing an RX interrupt while the peripheral is locked as
+         * this would prevent the RX interrupt from restarting HAL_UART_Receive_IT  */
+        HAL_NVIC_DisableIRQ(shell_USART_IRQn);
 
-		/* Transmits with interrupts. This must be done this way so that we can re-activate USART interrupts
-		 * before the transfer terminates so that we can continue reading from the terminal*/
-		status = HAL_UART_Transmit_IT(huart_shell, (uint8_t *)data, len);
+        /* Transmits with interrupts. This must be done this way so that we can re-activate USART interrupts
+         * before the transfer terminates so that we can continue reading from the terminal*/
+        status = HAL_UART_Transmit_IT(huart_shell, (uint8_t *)data, len);
 
-		HAL_NVIC_EnableIRQ(shell_USART_IRQn);
+        HAL_NVIC_EnableIRQ(shell_USART_IRQn);
 
-		/* Wait for the transfer to terminate*/
-		while(cli_tx_isr_flag == true){
-			/* flag will be set to false in HAL_UART_TxCpltCallback*/
-		}
-	}else{
-		/* We are called from an interrupt, using Transmit_IT would not work */
-		HAL_NVIC_DisableIRQ(shell_USART_IRQn);
-		status = HAL_UART_Transmit(huart_shell, (uint8_t *)data, len, 1000);
-		HAL_NVIC_EnableIRQ(shell_USART_IRQn);
-	}
+        /* Wait for the transfer to terminate*/
+        while(cli_tx_isr_flag == true){
+            /* flag will be set to false in HAL_UART_TxCpltCallback*/
+        }
+    }else{
+        /* We are called from an interrupt, using Transmit_IT would not work */
+        HAL_NVIC_DisableIRQ(shell_USART_IRQn);
+        status = HAL_UART_Transmit(huart_shell, (uint8_t *)data, len, 1000);
+        HAL_NVIC_EnableIRQ(shell_USART_IRQn);
+    }
 
 
 
-	if(status == HAL_OK){
-		return len;
-	}else{
-		return 0;
-	}
+    if(status == HAL_OK){
+        return len;
+    }else{
+        return 0;
+    }
 }
+#else
+/**
+ * @brief   Implement _write to support printf functionality.
+ * @note    Based on the solution found here:
+ *          https://github.com/alexeykosinov/Redirect-printf-to-USB-VCP-on-STM32H7-MCU
+ * @param[in]   file    File handle.
+ * @param[in]   data    Buffer of data to write.
+ * @param[in]   len     Number of data bytes to write.
+ * @return  The number of data bytes written.
+ */
+int _write(int file, char *data, int len){
+    UNUSED(file);
+#if 0
+    USBD_StatusTypeDef status = USBD_OK;
+    do {
+        status = USB_CDC_Transmit((uint8_t *)data, (uint16_t)len);
+    } while (status == USBD_BUSY);
+
+    if (status = USBD_FAIL) {
+        // should never get here
+        // @TODO: handle this error
+        return 0;
+    }
+#else
+    USB_CDC_Transmit((uint8_t *)data, (uint16_t)len);
+    osDelay(RTOS_ConvertMSToTicks(1u));
+
+    return len;
+#endif
+
+    return len;
+}
+#endif /* !CLI_ENABLE_USB */
 
 __attribute__((weak)) int _isatty(int file){
-	switch(file){
-	case STDERR_FILENO:
-	case STDIN_FILENO:
-	case STDOUT_FILENO:
-		return 1;
-	default:
-		errno = EBADF;
-		return 0;
-	}
+    switch(file){
+    case STDERR_FILENO:
+    case STDIN_FILENO:
+    case STDOUT_FILENO:
+        return 1;
+    default:
+        errno = EBADF;
+        return 0;
+    }
 }
 
 /*******************************************************************************
  *
- * 	Functions definitions
+ *  Functions definitions
  *
  ******************************************************************************/
 
@@ -261,24 +308,48 @@ static uint8_t cli_history_show(uint8_t mode, char** p_history)
     return err;
 }
 
+#if CLI_ENABLE_USB
+/**
+ * @brief   The USB receive callback function to handle received data from the USB bus.
+ * @param[in]   buffer  Buffer of data that was received.
+ * @param[in]   length  Number of bytes to received.
+ * @return  The number of bytes that were received and processed.
+ */
+static uint16_t usbReceiveCallback(uint8_t* const buffer, uint16_t length) {
+    if (shell_queue_in(&cli_rx_buff, (unsigned char *)&(buffer[0])) == false) {
+        return 0u;
+    }
+    return length;
+}
+
+
+void cli_init(void)
+{
+    USB_CDC_RegisterReceiveCallback(usbReceiveCallback);
+#else
 void cli_init(UART_HandleTypeDef *handle_uart, uint8_t USART_IRQn)
 {
-	huart_shell = handle_uart;
-	shell_USART_IRQn  = USART_IRQn;
-	shell_queue_init(&cli_rx_buff);
+    huart_shell = handle_uart;
+    shell_USART_IRQn  = USART_IRQn;
+#endif /* CLI_ENABLE_USB */
+    shell_queue_init(&cli_rx_buff);
     memset((uint8_t *)&history, 0, sizeof(history));
 
+#if !CLI_ENABLE_USB
     HAL_UART_MspInit(huart_shell);
     HAL_UART_Receive_IT(huart_shell, &cBuffer, 1);
+#endif /* !CLI_ENABLE_USB */
 
     for(size_t j = 0; j < MAX_COMMAND_NB; j++){
-    	CLI_commands[j].pCmd = "";
-    	CLI_commands[j].pFun = NULL;
+        CLI_commands[j].pCmd = "";
+        CLI_commands[j].pFun = NULL;
     }
 
 #ifndef CLI_PASSWORD
     cli_password_ok = true;
+#if CLI_ENABLE_GREET
     greet();
+#endif /* CLI_ENABLE_GREET */
 #endif
 
     CLI_ADD_CMD("help", cli_help_help, cli_help);
@@ -287,10 +358,18 @@ void cli_init(UART_HandleTypeDef *handle_uart, uint8_t USART_IRQn)
     CLI_ADD_CMD("log", cli_log_help, cli_log);
 
     if(CLI_LAST_LOG_CATEGORY > 32){
-    	ERR("Too many log categories defined. The max number of log categories that can be user defined is 31.\n");
+#if !CLI_ENABLE_CRLF
+        ERR("Too many log categories defined. The max number of log categories that can be user defined is 31.\n");
+#else
+        ERR("Too many log categories defined. The max number of log categories that can be user defined is 31.\r\n");
+#endif /* !CLI_ENABLE_CRLF */
     }
 
+#if !CLI_ENABLE_CRLF
     LOG(CLI_LOG_SHELL, "Command line successfully initialized.\n");
+#else
+    LOG(CLI_LOG_SHELL, "Command line successfully initialized.\r\n");
+#endif /* !CLI_ENABLE_CRLF */
 
 }
 
@@ -298,15 +377,15 @@ void cli_init(UART_HandleTypeDef *handle_uart, uint8_t USART_IRQn)
  * Callback function for UART IRQ when it is done receiving a char
  */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef * huart){
-	shell_queue_in(&cli_rx_buff, &cBuffer);
-	HAL_UART_Receive_IT(huart, &cBuffer, 1);
+    shell_queue_in(&cli_rx_buff, &cBuffer);
+    HAL_UART_Receive_IT(huart, &cBuffer, 1);
 }
 
 /*
  * Callback function for UART IRQ when it is done transmitting data
  */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef * huart){
-	cli_tx_isr_flag = false;
+    cli_tx_isr_flag = false;
 }
 
 /**
@@ -328,7 +407,7 @@ static void cli_rx_handle(shell_queue_s *rx_buff)
     bool newChar = true;
     while(newChar) {
         if(Handle.len < MAX_LINE_LEN) {  /* check the buffer */
-        	newChar = shell_queue_out(rx_buff, Handle.buff+Handle.len);
+            newChar = shell_queue_out(rx_buff, Handle.buff+Handle.len);
 
             /* new char coming from the terminal, copy it to Handle.buff */
             if(newChar) {
@@ -344,12 +423,12 @@ static void cli_rx_handle(shell_queue_s *rx_buff)
                     }
 
                 } else if(Handle.buff[Handle.len] == KEY_ENTER){
-                	exec_req = true;
-                	Handle.len++;
+                    exec_req = true;
+                    Handle.len++;
                 }else if(strstr((const char *)Handle.buff, KEY_DELETE) != NULL){
-                	strcpy((char *)&Handle.buff[Handle.len-3], (char *)&Handle.buff[Handle.len+1]);
-                	Handle.len -= 3;
-            	}else{
+                    strcpy((char *)&Handle.buff[Handle.len-3], (char *)&Handle.buff[Handle.len+1]);
+                    Handle.len -= 3;
+                }else{
                     Handle.len++;
                 }
 
@@ -395,7 +474,7 @@ static void cli_rx_handle(shell_queue_s *rx_buff)
                 if ((key == 0) && (Handle.len > i)) {
                     /* display char in terminal */
                     for (; i < Handle.len; i++) {
-                    	printf("%c", Handle.buff[i]);
+                        printf("%c", Handle.buff[i]);
 
                     }
                 }
@@ -414,81 +493,81 @@ static void cli_rx_handle(shell_queue_s *rx_buff)
      */
     if(exec_req && !cli_password_ok){
 #ifdef CLI_PASSWORD
-    	Handle.buff[Handle.len-1] = '\0';
-    	if(strcmp((char *)Handle.buff, XSTRING(CLI_PASSWORD)) == 0){
-    		cli_password_ok = true;
-    		greet();
-    	}
-    	Handle.len = 0;
+        Handle.buff[Handle.len-1] = '\0';
+        if(strcmp((char *)Handle.buff, XSTRING(CLI_PASSWORD)) == 0){
+            cli_password_ok = true;
+            greet();
+        }
+        Handle.len = 0;
 #else
-    	cli_password_ok = true;
-    	greet();
+        cli_password_ok = true;
+        greet();
 #endif
     }else if(exec_req && (Handle.len == 1)) {
         /* KEY_ENTER -->ENTER key from terminal */
-    	PRINT_CLI_NAME();
+        PRINT_CLI_NAME();
         Handle.len = 0;
     } else if(exec_req && Handle.len > 1) {  /* check for the length of command */
-		NL1();
-		Handle.buff[Handle.len - 1] = '\0';
-		cli_history_add((char *)Handle.buff);
-		char *command = strtok((char *)Handle.buff, " \t");
+        NL1();
+        Handle.buff[Handle.len - 1] = '\0';
+        cli_history_add((char *)Handle.buff);
+        char *command = strtok((char *)Handle.buff, " \t");
 
-		/* looking for a match */
-		for(i = 0; i < MAX_COMMAND_NB; i++) {
-			if(0 == strcmp(command, CLI_commands[i].pCmd)) {
-				cmd_match = true;
+        /* looking for a match */
+        for(i = 0; i < MAX_COMMAND_NB; i++) {
+            if(0 == strcmp(command, CLI_commands[i].pCmd)) {
+                cmd_match = true;
 
-				//Split arguments string to argc/argv
-				uint8_t argc = 1;
-				char 	*argv[MAX_ARGC];
-				argv[0] = command;
+                //Split arguments string to argc/argv
+                uint8_t argc = 1;
+                char    *argv[MAX_ARGC];
+                argv[0] = command;
 
-				char *token = strtok(NULL, " \t");
-				while(token != NULL){
-					if(argc >= MAX_ARGC){
-						printf(CLI_FONT_RED "Maximum number of arguments is %d. Ignoring the rest of the arguments."CLI_FONT_DEFAULT, MAX_ARGC-1);NL1();
-						break;
-					}
-					argv[argc] = token;
-					argc++;
-					token = strtok(NULL, " \t");
-				}
+                char *token = strtok(NULL, " \t");
+                while(token != NULL){
+                    if(argc >= MAX_ARGC){
+                        printf(CLI_FONT_RED "Maximum number of arguments is %d. Ignoring the rest of the arguments."CLI_FONT_DEFAULT, MAX_ARGC-1);NL1();
+                        break;
+                    }
+                    argv[argc] = token;
+                    argc++;
+                    token = strtok(NULL, " \t");
+                }
 
-				if(CLI_commands[i].pFun != NULL) {
-					/* call the func. */
-					TERMINAL_HIDE_CURSOR();
-					uint8_t result = CLI_commands[i].pFun(argc, argv);
+                if(CLI_commands[i].pFun != NULL) {
+                    /* call the func. */
+                    TERMINAL_HIDE_CURSOR();
+                    uint8_t result = CLI_commands[i].pFun(argc, argv);
 
-					if(result == EXIT_SUCCESS){
-						printf(CLI_FONT_GREEN "(%s returned %d)" CLI_FONT_DEFAULT, command, result);NL1();
-					}else{
-						printf(CLI_FONT_RED "(%s returned %d)" CLI_FONT_DEFAULT, command, result);NL1();
-					}
-					TERMINAL_SHOW_CURSOR();
-					break;
-				} else {
-					/* func. is void */
-					printf(CLI_FONT_RED "Command %s exists but no function is associated to it.", command);NL1();
-				}
-			}
-		}
+                    if(result == EXIT_SUCCESS){
+                        printf(CLI_FONT_GREEN "(%s returned %d)" CLI_FONT_DEFAULT, command, result);NL1();
+                    }else{
+                        printf(CLI_FONT_RED "(%s returned %d)" CLI_FONT_DEFAULT, command, result);NL1();
+                    }
+                    TERMINAL_SHOW_CURSOR();
+                    break;
+                } else {
+                    /* func. is void */
+                    printf(CLI_FONT_RED "Command %s exists but no function is associated to it.", command);NL1();
+                }
+            }
+        }
 
-		if(!cmd_match) {
-			/* no matching command */
-			printf("\r\nCommand \"%s\" unknown, try: help", Handle.buff);NL1();
-		}
+        if(!cmd_match) {
+            /* no matching command */
+            printf("\r\nCommand \"%s\" unknown, try: help", Handle.buff);NL1();
+        }
 
-		Handle.len = 0;
-		PRINT_CLI_NAME();
+        Handle.len = 0;
+        PRINT_CLI_NAME();
 
     }
 
 
     if(Handle.len >= MAX_LINE_LEN) {
         /* full, so restart the count */
-    	printf(CLI_FONT_RED "\r\nMax command length is %d.\r\n" CLI_FONT_DEFAULT, MAX_LINE_LEN-1);
-    	PRINT_CLI_NAME();
+        printf(CLI_FONT_RED "\r\nMax command length is %d.\r\n" CLI_FONT_DEFAULT, MAX_LINE_LEN-1);
+        PRINT_CLI_NAME();
         Handle.len = 0;
     }
 }
@@ -554,30 +633,30 @@ void greet(void){
   */
 uint8_t cli_help(int argc, char *argv[])
 {
-	if(argc == 1){
-	    for(size_t i = 0; i < MAX_COMMAND_NB; i++) {
-	    	if(strcmp(CLI_commands[i].pCmd, "") != 0){
-		    	printf("[%s]", CLI_commands[i].pCmd);NL1();
-		        if (CLI_commands[i].pHelp) {
-		            printf(CLI_commands[i].pHelp);NL2();
-		        }
-	    	}
-	    }
-	    return EXIT_SUCCESS;
-	}else if(argc == 2){
-	    for(size_t i = 0; i < MAX_COMMAND_NB; i++) {
-	    	if(strcmp(CLI_commands[i].pCmd, argv[1]) == 0){
-		    	printf("[%s]", CLI_commands[i].pCmd);NL1();
-	    		printf(CLI_commands[i].pHelp);NL1();
-	    		return EXIT_SUCCESS;
-	    	}
-	    }
-	    printf("No help found for command %s.", argv[1]);NL1();
-	    return EXIT_FAILURE;
-	}else{
-		printf("Command \"%s\" takes at most 1 argument.", argv[0]);NL1();
-		return EXIT_FAILURE;
-	}
+    if(argc == 1){
+        for(size_t i = 0; i < MAX_COMMAND_NB; i++) {
+            if(strcmp(CLI_commands[i].pCmd, "") != 0){
+                printf("[%s]", CLI_commands[i].pCmd);NL1();
+                if (CLI_commands[i].pHelp) {
+                    printf(CLI_commands[i].pHelp);NL2();
+                }
+            }
+        }
+        return EXIT_SUCCESS;
+    }else if(argc == 2){
+        for(size_t i = 0; i < MAX_COMMAND_NB; i++) {
+            if(strcmp(CLI_commands[i].pCmd, argv[1]) == 0){
+                printf("[%s]", CLI_commands[i].pCmd);NL1();
+                printf(CLI_commands[i].pHelp);NL1();
+                return EXIT_SUCCESS;
+            }
+        }
+        printf("No help found for command %s.", argv[1]);NL1();
+        return EXIT_FAILURE;
+    }else{
+        printf("Command \"%s\" takes at most 1 argument.", argv[0]);NL1();
+        return EXIT_FAILURE;
+    }
     return EXIT_FAILURE;
 }
 
@@ -588,10 +667,10 @@ uint8_t cli_help(int argc, char *argv[])
   */
 uint8_t cli_clear(int argc, char *argv[])
 {
-	if(argc != 1){
-		printf("command \"%s\" does not take any argument.", argv[0]);NL1();
-		return EXIT_FAILURE;
-	}
+    if(argc != 1){
+        printf("command \"%s\" does not take any argument.", argv[0]);NL1();
+        return EXIT_FAILURE;
+    }
     TERMINAL_BACK_DEFAULT(); /* set terminal background color: black */
     TERMINAL_FONT_DEFAULT(); /* set terminal display color: green */
 
@@ -612,102 +691,150 @@ uint8_t cli_clear(int argc, char *argv[])
   */
 uint8_t cli_reset(int argc, char *argv[])
 {
-	if(argc > 1){
-		printf("Command \"%s\" takes no argument.", argv[0]);NL1();
-		return EXIT_FAILURE;
-	}
+    if(argc > 1){
+        printf("Command \"%s\" takes no argument.", argv[0]);NL1();
+        return EXIT_FAILURE;
+    }
 
-	NL1();printf("[END]: System Rebooting");NL1();
-	HAL_NVIC_SystemReset();
-	return EXIT_SUCCESS;
+    NL1();printf("[END]: System Rebooting");NL1();
+    HAL_NVIC_SystemReset();
+    return EXIT_SUCCESS;
 }
 
 void cli_add_command(const char *command, const char *help, uint8_t (*exec)(int argc, char *argv[])){
-	size_t i = 0;
-	for(; i < MAX_COMMAND_NB; i++){
-		if(strcmp(CLI_commands[i].pCmd, "") == 0){
-			CLI_commands[i].pCmd = command;
-			CLI_commands[i].pFun = exec;
-			CLI_commands[i].pHelp = help;
-			break;
-		}
-	}
-	if(i == MAX_COMMAND_NB){
-		ERR("Cannot add command %s, max number of commands "
-				"reached. The maximum number of command is set to %d.\n" CLI_FONT_DEFAULT,
-				command, MAX_COMMAND_NB); NL1();
-	}
-	LOG(CLI_LOG_SHELL, "Command %s added to shell.\n", command);
+    size_t i = 0;
+    for(; i < MAX_COMMAND_NB; i++){
+        if(strcmp(CLI_commands[i].pCmd, "") == 0){
+            CLI_commands[i].pCmd = command;
+            CLI_commands[i].pFun = exec;
+            CLI_commands[i].pHelp = help;
+            break;
+        }
+    }
+    if(i == MAX_COMMAND_NB){
+        ERR("Cannot add command %s, max number of commands "
+#if !CLI_ENABLE_CRLF
+                "reached. The maximum number of command is set to %d.\n" CLI_FONT_DEFAULT,
+#else
+                "reached. The maximum number of command is set to %d.\r\n" CLI_FONT_DEFAULT,
+#endif /* !CLI_ENABLE_CRLF */
+                command, MAX_COMMAND_NB); NL1();
+    }
+#if !CLI_ENABLE_CRLF
+    LOG(CLI_LOG_SHELL, "Command %s added to shell.\n", command);
+#else
+    LOG(CLI_LOG_SHELL, "Command %s added to shell.\r\n", command);
+#endif /* !CLI_ENABLE_CRLF */
 }
 
 uint8_t cli_log(int argc, char *argv[]){
-	if(argc < 2){
-		printf("Command %s takes at least one argument. Use \"help %s\" for usage.\n", argv[0], argv[0]);
-		return EXIT_FAILURE;
-	}
+    if(argc < 2){
+#if !CLI_ENABLE_CRLF
+        printf("Command %s takes at least one argument. Use \"help %s\" for usage.\n", argv[0], argv[0]);
+#else
+        printf("Command %s takes at least one argument. Use \"help %s\" for usage.\r\n", argv[0], argv[0]);
+#endif /* !CLI_ENABLE_CRLF */
+        return EXIT_FAILURE;
+    }
 
-	if(strcmp(argv[1], "on") == 0){
-		if(argc < 3){
-			printf("Command %s on takes at least 3 arguments.\n", argv[0]);
-			return EXIT_FAILURE;
-		}
-		if(strcmp(argv[2], "all") == 0){
-			cli_log_stat = 0xFFFFFFFF;
-			printf("All logs enabled.\n");
-			return EXIT_SUCCESS;
-		}else{
-			for(int i = 2; i < argc; i++){
-				cli_enable_log_entry(argv[i]);
-			}
-			return EXIT_SUCCESS;
-		}
+    if(strcmp(argv[1], "on") == 0){
+        if(argc < 3){
+#if !CLI_ENABLE_CRLF
+            printf("Command %s on takes at least 3 arguments.\n", argv[0]);
+#else
+            printf("Command %s on takes at least 3 arguments.\r\n", argv[0]);
+#endif /* !CLI_ENABLE_CRLF */
+            return EXIT_FAILURE;
+        }
+        if(strcmp(argv[2], "all") == 0){
+            cli_log_stat = 0xFFFFFFFF;
+#if !CLI_ENABLE_CRLF
+            printf("All logs enabled.\n");
+#else
+            printf("All logs enabled.\r\n");
+#endif /* !CLI_ENABLE_CRLF */
+            return EXIT_SUCCESS;
+        }else{
+            for(int i = 2; i < argc; i++){
+                cli_enable_log_entry(argv[i]);
+            }
+            return EXIT_SUCCESS;
+        }
 
-	}else if(strcmp(argv[1], "off") == 0){
-		printf("Turning off all logs\n");
-		if(argc < 3){
-			printf("Command %s on takes at least 3 arguments.\n", argv[0]);
-			return EXIT_FAILURE;
-		}
-		if(strcmp(argv[2], "all") == 0){
-			cli_log_stat = 0;
-			printf("All logs disabled.\n");
-			return EXIT_SUCCESS;
-		}else{
-			for(int i = 2; i < argc; i++){
-				cli_disable_log_entry(argv[i]);
-			}
-			return EXIT_SUCCESS;
-		}
+    }else if(strcmp(argv[1], "off") == 0){
+#if !CLI_ENABLE_CRLF
+        printf("Turning off all logs\n");
+#else
+        printf("Turning off all logs\r\n");
+#endif
+        if(argc < 3){
+#if !CLI_ENABLE_CRLF
+            printf("Command %s on takes at least 3 arguments.\n", argv[0]);
+#else
+            printf("Command %s on takes at least 3 arguments.\r\n", argv[0]);
+#endif /* !CLI_ENABLE_CRLF */
+            return EXIT_FAILURE;
+        }
+        if(strcmp(argv[2], "all") == 0){
+            cli_log_stat = 0;
+#if !CLI_ENABLE_CRLF
+            printf("All logs disabled.\n");
+#else
+            printf("All logs disabled.\r\n");
+#endif /* !CLI_ENABLE_CRLF */
+            return EXIT_SUCCESS;
+        }else{
+            for(int i = 2; i < argc; i++){
+                cli_disable_log_entry(argv[i]);
+            }
+            return EXIT_SUCCESS;
+        }
 
-	}else if(strcmp(argv[1], "show") == 0){
-		for(unsigned int i = 0; i < CLI_LAST_LOG_CATEGORY; i++){
-			printf("%16s:\t", cli_logs_names[i]);
-			if(cli_log_stat&(1<<i)){
-				printf(CLI_FONT_GREEN"Enabled"CLI_FONT_DEFAULT"\n");
-			}else{
-				printf(CLI_FONT_RED"Disabled"CLI_FONT_DEFAULT"\n");
-			}
-		}
-		return EXIT_SUCCESS;
-	}
+    }else if(strcmp(argv[1], "show") == 0){
+        for(unsigned int i = 0; i < CLI_LAST_LOG_CATEGORY; i++){
+            printf("%16s:\t", cli_logs_names[i]);
+            if(cli_log_stat&(1<<i)){
+#if !CLI_ENABLE_CRLF
+                printf(CLI_FONT_GREEN"Enabled"CLI_FONT_DEFAULT"\n");
+#else
+                printf(CLI_FONT_GREEN"Enabled"CLI_FONT_DEFAULT"\r\n");
+#endif /* !CLI_ENABLE_CRLF */
+            }else{
+#if !CLI_ENABLE_CRLF
+                printf(CLI_FONT_RED"Disabled"CLI_FONT_DEFAULT"\n");
+#else
+                printf(CLI_FONT_RED"Disabled"CLI_FONT_DEFAULT"\r\n");
+#endif /* !CLI_ENABLE_CRLF */
+            }
+        }
+        return EXIT_SUCCESS;
+    }
 
-	return EXIT_FAILURE;
+    return EXIT_FAILURE;
 }
 
 void cli_disable_log_entry(char *str){
-	for(unsigned int i = 0; i < CLI_LAST_LOG_CATEGORY; i++){
-		if(strcmp(str, cli_logs_names[i]) == 0){
-			printf("LOG disabled for category %s.\n", str);
-			cli_log_stat &= ~(1<<i);
-		}
-	}
+    for(unsigned int i = 0; i < CLI_LAST_LOG_CATEGORY; i++){
+        if(strcmp(str, cli_logs_names[i]) == 0){
+#if !CLI_ENABLE_CRLF
+            printf("LOG disabled for category %s.\n", str);
+#else
+            printf("LOG disabled for category %s.\r\n", str);
+#endif /* !CLI_ENABLE_CRLF */
+            cli_log_stat &= ~(1<<i);
+        }
+    }
 }
 
 void cli_enable_log_entry(char *str){
-	for(unsigned int i = 0; i < CLI_LAST_LOG_CATEGORY; i++){
-		if(strcmp(str, cli_logs_names[i]) == 0){
-			printf("LOG enabled for category %s.\n", str);
-			cli_log_stat |= (1<<i);
-		}
-	}
+    for(unsigned int i = 0; i < CLI_LAST_LOG_CATEGORY; i++){
+        if(strcmp(str, cli_logs_names[i]) == 0){
+#if !CLI_ENABLE_CRLF
+            printf("LOG enabled for category %s.\n", str);
+#else
+            printf("LOG enabled for category %s.\r\n", str);
+#endif /* !CLI_ENABLE_CRLF */
+            cli_log_stat |= (1<<i);
+        }
+    }
 }
