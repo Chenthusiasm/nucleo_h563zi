@@ -19,7 +19,6 @@
 #include "../inc/sys_command_line.h"
 
 #if CLI_ENABLE_USB
-#include "app_freertos.h"
 #include "RTOS.h"
 #include "usbd_cdc_if.h"
 #include "usbd_core.h"
@@ -185,24 +184,16 @@ int _write(int file, char *data, int len){
  */
 int _write(int file, char *data, int len){
     UNUSED(file);
-#if 0
     USBD_StatusTypeDef status = USBD_OK;
     do {
         status = USB_CDC_Transmit((uint8_t *)data, (uint16_t)len);
     } while (status == USBD_BUSY);
 
-    if (status = USBD_FAIL) {
+    if (status == USBD_FAIL) {
         // should never get here
         // @TODO: handle this error
         return 0;
     }
-#else
-    USB_CDC_Transmit((uint8_t *)data, (uint16_t)len);
-    osDelay(RTOS_ConvertMSToTicks(1u));
-
-    return len;
-#endif
-
     return len;
 }
 #endif /* !CLI_ENABLE_USB */
