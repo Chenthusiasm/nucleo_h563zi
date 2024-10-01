@@ -115,7 +115,12 @@ bool DIO_IsSetHigh(DIO const *const self);
 bool DIO_IsSetLow(DIO const *const self);
 bool DIO_IsDigitalInput(DIO const *const self);
 bool DIO_IsDigitalOutput(DIO const *const self);
+bool DIO_IsEXTI(DIO const *const self);
 DIO_Pin_t DIO_GetPin(DIO_PinMask_t pinMask);
+bool DIO_IsPortPinDigitalInput(GPIO_TypeDef const *const portHandle, DIO_PinMask_t pinMask);
+bool DIO_IsPortPinDigitalOutput(GPIO_TypeDef const *const portHandle, DIO_PinMask_t pinMask);
+bool DIO_IsPortPinEXTI(GPIO_TypeDef const *const portHandle, DIO_PinMask_t pinMask);
+
 
 
 #ifdef __cplusplus

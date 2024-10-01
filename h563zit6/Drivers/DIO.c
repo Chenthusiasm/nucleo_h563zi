@@ -13,6 +13,7 @@
 
 #include "DIO.h"
 #include "DIO_IRQ.h"
+#include "Helper.h"
 #include "stm32h5xx_ll_gpio.h"
 
 
@@ -54,10 +55,70 @@ static DIO_PinMask_t const GPIOPinMaskMap[] = {
 };
 
 
+/* Lookup table of the GPIO port handles. */
+static GPIO_TypeDef const *const GPIOPortHandleTable[] = {
+    [0] = GPIOA,
+    [1] = GPIOB,
+    [2] = GPIOC,
+    [3] = GPIOD,
+    [4] = GPIOE,
+    [5] = GPIOF,
+    [6] = GPIOG,
+    [7] = GPIOH,
+    [8] = GPIOI,
+};
+
+
 /* Internal function prototypes ------------------------------------------------------------------*/
 
 
 /* Internal functions ----------------------------------------------------------------------------*/
+
+/**
+ * @brief   Checks if EXTI is enabled for the given port and pin mask.
+ * @param[in]   portHandle  Handle of the MCU GPIO port peripheral.
+ * @param[in]   pinMask     The HAL pin mask.
+ * @note    Refer to the TRM: EXTI_EXTICR1, EXTI_EXTICR2, EXTI_EXTICR3, and EXTI_EXTICR4.
+ * @return  If the GPIO port and pin mask is configured for EXTI, true; otherwise, false.
+ */
+static bool isEXTIEnabled(GPIO_TypeDef const *const portHandle, DIO_PinMask_t pinMask) {
+    if (IsPowerOfTwo(pinMask) == false) {
+        return false;
+    }
+    // index: the specific EXTICRn register, where index=0 corresponds to EXTICR1
+    // mask: the isolated nibble in pinMask where the bit is set (i.e pinMask=0x0400 mask=0x4)
+    uint8_t index = 0u;
+    uint16_t mask = pinMask;
+    if (pinMask >= GPIO_PIN_4) {
+        index += 1u;
+        mask >>= 4u;
+        if (pinMask >= GPIO_PIN_8) {
+            index += 1u;
+            mask >>= 4u;
+            if (pinMask >= GPIO_PIN_12) {
+                index += 1u;
+                mask >>= 4u;
+            }
+        }
+    }
+    // convert the mask into a right shift value since the EXTICR registers are divided into 8-bit
+    // values representing the specific GPIO port with the EXTI enabled
+    uint8_t rightShift = 0u;
+    if (mask == 0x0002) {
+        rightShift = 8u;
+    } else if (mask == 0x0004) {
+        rightShift = 16u;
+    } else if (mask == 0x0008) {
+        rightShift = 24u;
+    }
+    // use the right shift to generate the value that corresponds to the specific GPIO port; see
+    // GPIOPortHandleTable for the conversion
+    uint32_t value = (EXTI->EXTICR[index] >> rightShift) & 0x000000ff;
+    if (value >= (sizeof(GPIOPortHandleTable) / sizeof(GPIOPortHandleTable[0]))) {
+        return false;
+    }
+    return (portHandle == GPIOPortHandleTable[value]);
+}
 
 
 /* External function prototypes ------------------------------------------------------------------*/
@@ -236,7 +297,7 @@ bool DIO_IsSetLow(DIO const *const self) {
 bool DIO_IsDigitalInput(DIO const *const self) {
     assert(self != NULL);
 
-    return (LL_GPIO_GetPinMode(self->portHandle, GPIOPinMaskMap[self->pin]) == LL_GPIO_MODE_INPUT);
+    return DIO_IsPortPinDigitalInput(self->portHandle, GPIOPinMaskMap[self->pin]);
 }
 
 
@@ -248,13 +309,26 @@ bool DIO_IsDigitalInput(DIO const *const self) {
 bool DIO_IsDigitalOutput(DIO const *const self) {
     assert(self != NULL);
 
-    return (LL_GPIO_GetPinMode(self->portHandle, GPIOPinMaskMap[self->pin]) == LL_GPIO_MODE_OUTPUT);
+    return DIO_IsPortPinDigitalOutput(self->portHandle, GPIOPinMaskMap[self->pin]);
+}
+
+
+/**
+ * @brief   Check if the DIO pin is configured for EXTI (external interrupt).
+ * @param[in]   self    Pointer to the DIO struct that represents the digital I/O instance.
+ * @return  If the DIO pin is configured for EXTI, true; otherwise, false.
+ */
+bool DIO_IsEXTI(DIO const *const self) {
+    assert(self != NULL);
+
+    return DIO_IsPortPinEXTI(self->portHandle, GPIOPinMaskMap[self->pin]);
 }
 
 
 /**
  * @brief   Converts the HAL pin mask to the pin number.
  * @param[in]   pinMask The HAL pin mask.
+ * @note    A DIO instance is not needed; this is like a C++ static method.
  * @return  The HAL pin mask converted into the pin number; if the pin mask is invalid,
  *          return DIO_INVALID_PIN.
  */
@@ -282,4 +356,51 @@ DIO_Pin_t DIO_GetPin(DIO_PinMask_t pinMask) {
         ;
     }
     return pin;
+}
+
+
+/**
+ * @brief   Check if the GPIO port and pin mask is configured for digital input.
+ * @param[in]   portHandle  Handle of the MCU GPIO port peripheral.
+ * @param[in]   pinMask     The HAL pin mask.
+ * @note    A DIO instance is not needed; this is like a C++ static method.
+ * @return  If the GPIO port and pin mask is configured for digital input, true; otherwise, false.
+ */
+bool DIO_IsPortPinDigitalInput(GPIO_TypeDef const *const portHandle, DIO_PinMask_t pinMask) {
+    if (portHandle == NULL) {
+        return false;
+    }
+    return (LL_GPIO_GetPinMode(portHandle, pinMask) == LL_GPIO_MODE_INPUT);
+}
+
+
+/**
+ * @brief   Check if the GPIO port and pin mask is configured for digital output.
+ * @param[in]   portHandle  Handle of the MCU GPIO port peripheral.
+ * @param[in]   pinMask     The HAL pin mask.
+ * @note    A DIO instance is not needed; this is like a C++ static method.
+ * @return  If the GPIO port and pin mask is configured for EXTI, true; otherwise, false.
+ */
+bool DIO_IsPortPinDigitalOutput(GPIO_TypeDef const *const portHandle, DIO_PinMask_t pinMask) {
+    if (portHandle == NULL) {
+        return false;
+    }
+    return (LL_GPIO_GetPinMode(portHandle, pinMask) == LL_GPIO_MODE_OUTPUT);
+
+}
+
+
+/**
+ * @brief   Check if the GPIO port and pin mask is configured for EXTI (external interrupt).
+ * @param[in]   portHandle  Handle of the MCU GPIO port peripheral.
+ * @param[in]   pinMask     The HAL pin mask.
+ * @note    A DIO instance is not needed; this is like a C++ static method.
+ * @return  If the GPIO port and pin mask is configured for EXTI, true; otherwise, false.
+ */
+bool DIO_IsPortPinEXTI(GPIO_TypeDef const *const portHandle, DIO_PinMask_t pinMask) {
+    if (portHandle == NULL) {
+        return false;
+    }
+    return ((LL_GPIO_GetPinMode(portHandle, pinMask) == LL_GPIO_MODE_INPUT) &&
+            isEXTIEnabled(portHandle, pinMask));
 }

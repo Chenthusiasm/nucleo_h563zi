@@ -40,6 +40,10 @@ static DIO inputPC9;
 static DIO inputPC10;
 static DIO inputPC11;
 static DIO inputPC12;
+static DIO inputPA4;
+static DIO inputPA5;
+static DIO inputPA6;
+static DIO inputPA7;
 
 
 /* Internal constants ----------------------------------------------------------------------------*/
@@ -62,6 +66,10 @@ static DIO *const DIOPtrTable[] = {
     [14] = &inputPC10,
     [15] = &inputPC11,
     [16] = &inputPC12,
+    [17] = &inputPA4,
+    [18] = &inputPA5,
+    [19] = &inputPA6,
+    [20] = &inputPA7,
 };
 
 static uint8_t DIOPtrTableSize = sizeof(DIOPtrTable) / sizeof(DIOPtrTable[0]);
@@ -107,6 +115,10 @@ static void init(void) {
     inputPC10 = DIO_ctor(GPIOC, DIO_GetPin(GPIO_PIN_10), generalIOCallback);
     inputPC11 = DIO_ctor(GPIOC, DIO_GetPin(GPIO_PIN_11), generalIOCallback);
     inputPC12 = DIO_ctor(GPIOC, DIO_GetPin(GPIO_PIN_12), generalIOCallback);
+    inputPA4 = DIO_ctor(GPIOA, DIO_GetPin(GPIO_PIN_4), NULL);
+    inputPA5 = DIO_ctor(GPIOA, DIO_GetPin(GPIO_PIN_5), NULL);
+    inputPA6 = DIO_ctor(GPIOA, DIO_GetPin(GPIO_PIN_6), NULL);
+    inputPA7 = DIO_ctor(GPIOA, DIO_GetPin(GPIO_PIN_7), NULL);
 
     // init DIO_IRQ
     DIO_IRQ_Err_t irqErr = DIO_IRQ_Init();
@@ -132,7 +144,8 @@ static void init(void) {
     for (uint8_t index = 0u; index < DIOPtrTableSize; ++index) {
         bool output = DIO_IsDigitalOutput(DIOPtrTable[index]);
         bool input = DIO_IsDigitalInput(DIOPtrTable[index]);
-        printf("    type[%u]; output=%u; input=%u\n", index, output, input);
+        bool exti = DIO_IsEXTI(DIOPtrTable[index]);
+        printf("    type[%u]; output=%u; input=%u; exti=%u\n", index, output, input, exti);
     }
 
 }
