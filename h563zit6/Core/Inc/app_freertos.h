@@ -57,6 +57,7 @@ extern "C" {
 extern osThreadId_t MainAppTaskHandle;
 extern osThreadId_t DiagnosticsTaskHandle;
 extern osMutexId_t TestMutexHandle;
+extern osMessageQueueId_t DiagnosticsQueueHandle;
 
 /* Exported function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */

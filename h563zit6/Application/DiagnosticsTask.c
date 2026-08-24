@@ -6,12 +6,15 @@
 #include "sys_command_line.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
+#include "DiagnosticsQueue.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
 
 
 /* Internal define -------------------------------------------------------------------------------*/
+
+#define TASK_POLL_MS                    (5u)
 
 
 /* Internal macro --------------------------------------------------------------------------------*/
@@ -41,6 +44,21 @@ static uint16_t usbReceiveCallback(uint8_t* const Buf, uint16_t Len) {
     return Len;
 }
 
+static void printMessage(DiagMsg_t const* message) {
+    uint32_t ms = (message->timestamp_ticks * 1000 ) / osKernelGetTickFreq();
+    uint32_t ms_int = ms / 1000u;
+    uint32_t ms_fraction = ms % 1000u;
+    if (message->source == DiagSource_printf) {
+        printf("[%lu.%03lums] %.*s",
+            ms_int, ms_fraction, message->len, message->text);
+    }
+    else {
+        printf("[%lu.%03lums:%s] %.*s" ENDL,
+            ms_int, ms_fraction, DiagQ_GetSourceStr(message->source),
+            message->len, message->text);
+    }
+}
+
 
 /* External functions ----------------------------------------------------------------------------*/
 
@@ -54,7 +72,11 @@ void DiagnosticsTask_Start(void *argument) {
     for (;;) {
         CLI_RUN();
         //processUSB();
-        osDelay(RTOS_ConvertMSToTicks(1u));
+        DiagMsg_t message;
+        osStatus_t status = osMessageQueueGet(DiagnosticsQueueHandle, &message, NULL, TASK_POLL_MS);
+        if (status == osOK) {
+            printMessage(&message);
+        }
     }
 }
 

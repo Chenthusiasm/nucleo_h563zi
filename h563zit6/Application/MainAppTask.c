@@ -6,6 +6,7 @@
 #include "Mutex.h"
 #include "RTOS.h"
 #include "sys_command_line.h"
+#include "DiagnosticsQueue.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -130,7 +131,7 @@ void MainAppTask_Start(void *argument) {
     uint32_t count = 0u;
     for (;;) {
         //printf("MainAppTask[%lu]" ENDL, count++);
-    	HAL_GPIO_TogglePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin);
+        HAL_GPIO_TogglePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin);
         osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
     }
 #endif
@@ -151,11 +152,11 @@ void MainAppTask_Init(void) {
  * @param[in] GPIO_Pin The GPIO pin that triggered the interrupt.
  */
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == B1_USER_Pin) {
-		// button polarity is inverted
-		HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
-		//printf("[USER] pressed" ENDL);
-	}
+    if (GPIO_Pin == B1_USER_Pin) {
+        // button polarity is inverted
+        HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
+        DiagQ_printf("[USER] pressed" ENDL);
+    }
 }
 
 
@@ -165,9 +166,9 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
  * @param[in] GPIO_Pin The GPIO pin that triggered the interrupt.
  */
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == B1_USER_Pin) {
-		// button polarity is inverted
-		HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
-		//printf("[USER] released" ENDL);
-	}
+    if (GPIO_Pin == B1_USER_Pin) {
+        // button polarity is inverted
+        HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
+        DiagQ_printf("[USER] released" ENDL);
+    }
 }

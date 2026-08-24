@@ -22,11 +22,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "DiagnosticsQueue.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticTask_t osStaticThreadDef_t;
+typedef StaticQueue_t osStaticMessageQDef_t;
 typedef StaticSemaphore_t osStaticMutexDef_t;
 /* USER CODE BEGIN PTD */
 
@@ -48,7 +49,7 @@ typedef StaticSemaphore_t osStaticMutexDef_t;
 /* USER CODE END Variables */
 /* Definitions for MainAppTask */
 osThreadId_t MainAppTaskHandle;
-uint32_t MainAppTaskBuffer[ 256 ];
+uint32_t MainAppTaskBuffer[ 512 ];
 osStaticThreadDef_t MainAppTaskCB;
 const osThreadAttr_t MainAppTask_attributes = {
   .name = "MainAppTask",
@@ -60,7 +61,7 @@ const osThreadAttr_t MainAppTask_attributes = {
 };
 /* Definitions for DiagnosticsTask */
 osThreadId_t DiagnosticsTaskHandle;
-uint32_t DiagnosticsTaskBuffer[ 1024 ];
+uint32_t DiagnosticsTaskBuffer[ 4096 ];
 osStaticThreadDef_t DiagnosticsTaskCB;
 const osThreadAttr_t DiagnosticsTask_attributes = {
   .name = "DiagnosticsTask",
@@ -77,6 +78,17 @@ const osMutexAttr_t TestMutex_attributes = {
   .name = "TestMutex",
   .cb_mem = &TestMutexCB,
   .cb_size = sizeof(TestMutexCB),
+};
+/* Definitions for DiagnosticsQueue */
+osMessageQueueId_t DiagnosticsQueueHandle;
+uint8_t DiagnosticsQueueBuffer[ 64 * sizeof( DiagMsg_t ) ];
+osStaticMessageQDef_t DiagnosticsQueueCB;
+const osMessageQueueAttr_t DiagnosticsQueue_attributes = {
+  .name = "DiagnosticsQueue",
+  .cb_mem = &DiagnosticsQueueCB,
+  .cb_size = sizeof(DiagnosticsQueueCB),
+  .mq_mem = &DiagnosticsQueueBuffer,
+  .mq_size = sizeof(DiagnosticsQueueBuffer)
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -107,6 +119,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+  /* creation of DiagnosticsQueue */
+  DiagnosticsQueueHandle = osMessageQueueNew (64, sizeof(DiagMsg_t), &DiagnosticsQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
