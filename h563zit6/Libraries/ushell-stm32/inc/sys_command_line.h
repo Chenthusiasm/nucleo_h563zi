@@ -82,10 +82,12 @@ extern "C" {
 #define NL1()           do { printf("\n"); } while(0)
 #define NL2()           do { printf("\n\n"); } while(0)
 #define NL3()           do { printf("\n\n\n"); } while(0)
+#define ENDL			"\n"
 #else
 #define NL1()           do { printf("\r\n"); } while(0)
 #define NL2()           do { printf("\r\n\r\n"); } while(0)
 #define NL3()           do { printf("\r\n\r\n\r\n"); } while(0)
+#define ENDL			"\r\n"
 
 #endif /* !CLI_ENABLE_CRLF */
 

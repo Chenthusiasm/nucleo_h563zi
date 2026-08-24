@@ -129,7 +129,7 @@ void MainAppTask_Start(void *argument) {
 #else
     uint32_t count = 0u;
     for (;;) {
-        printf("MainAppTask[%lu]\n", count++);
+        printf("MainAppTask[%lu]" ENDL, count++);
         osDelay(RTOS_ConvertMSToTicks(LONG_DELAY_MS));
     }
 #endif
