@@ -19,7 +19,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os2.h"
-#include "memorymap.h"
 #include "usart.h"
 #include "usb.h"
 #include "gpio.h"
