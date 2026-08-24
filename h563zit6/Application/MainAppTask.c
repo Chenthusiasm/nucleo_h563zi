@@ -129,8 +129,9 @@ void MainAppTask_Start(void *argument) {
 #else
     uint32_t count = 0u;
     for (;;) {
-        printf("MainAppTask[%lu]" ENDL, count++);
-        osDelay(RTOS_ConvertMSToTicks(LONG_DELAY_MS));
+        //printf("MainAppTask[%lu]" ENDL, count++);
+    	HAL_GPIO_TogglePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin);
+        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
     }
 #endif
 }
@@ -141,4 +142,32 @@ void MainAppTask_Start(void *argument) {
  */
 void MainAppTask_Init(void) {
     ;
+}
+
+
+/**
+ * @brief General EXTI rising edge callback.
+ *
+ * @param[in] GPIO_Pin The GPIO pin that triggered the interrupt.
+ */
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
+	if (GPIO_Pin == B1_USER_Pin) {
+		// button polarity is inverted
+		HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
+		//printf("[USER] pressed" ENDL);
+	}
+}
+
+
+/**
+ * @brief General EXTI falling edge callback.
+ *
+ * @param[in] GPIO_Pin The GPIO pin that triggered the interrupt.
+ */
+void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
+	if (GPIO_Pin == B1_USER_Pin) {
+		// button polarity is inverted
+		HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
+		//printf("[USER] released" ENDL);
+	}
 }
