@@ -7,6 +7,8 @@
 #include "RTOS.h"
 #include "sys_command_line.h"
 #include "DiagnosticsQueue.h"
+#include "AD4080.h"
+#include "spi.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -27,6 +29,10 @@
 
 static Mutex mutex0;
 static Mutex mutex1;
+
+static AD4080_Handle ad4080;
+
+static uint8_t ad4080ScratchValue = 0;
 
 
 /* Internal function prototypes ------------------------------------------------------------------*/
@@ -52,6 +58,10 @@ static void printMutexAquiredState(void) {
 
 static void printResult(char const* function, bool result) {
     printf("    %s=%d\n", function, result);
+}
+
+static void initAD4080(void) {
+    AD4080_Init(&ad4080, &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin);
 }
 
 
@@ -142,7 +152,7 @@ void MainAppTask_Start(void *argument) {
  *  @brief Initialization for the MainApp task.
  */
 void MainAppTask_Init(void) {
-    ;
+    initAD4080();
 }
 
 
@@ -155,6 +165,7 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == B1_USER_Pin) {
         // button polarity is inverted
         HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
+        AD4080_ScratchPadLoopback(&ad4080, ad4080ScratchValue++);
         DiagQ_printf("[USER] pressed" ENDL);
     }
 }
@@ -169,6 +180,7 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == B1_USER_Pin) {
         // button polarity is inverted
         HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
+        AD4080_VerifyChipID(&ad4080);
         DiagQ_printf("[USER] released" ENDL);
     }
 }
