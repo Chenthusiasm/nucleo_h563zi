@@ -6,9 +6,10 @@
 #include "Mutex.h"
 #include "RTOS.h"
 #include "sys_command_line.h"
-#include "DiagnosticsQueue.h"
 #include "AD4080.h"
 #include "spi.h"
+#include "DiagnosticsQ.h"
+#include "MainAppQ.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -20,15 +21,13 @@
 #define DELAY_MS                        (500u)
 #define FINAL_DELAY_MS                  (2000u)
 #define LONG_DELAY_MS                   (5000u)
+#define TASK_POLL_MS                    (5u)
 
 
 /* Internal macro --------------------------------------------------------------------------------*/
 
 
 /* Internal variables ----------------------------------------------------------------------------*/
-
-static Mutex mutex0;
-static Mutex mutex1;
 
 static AD4080_Handle ad4080;
 
@@ -40,28 +39,50 @@ static uint8_t ad4080ScratchValue = 0;
 
 /* Internal functions ----------------------------------------------------------------------------*/
 
-static void initMutex(void) {
-#if 0
-    printf("initMutex()\n");
-    mutex0 = Mutex_ctor(NULL);
-    mutex1 = Mutex_ctor(NULL);
-
-//    mutex0 = Mutex_ctor();
-//    mutex1 = Mutex_ctor();
-#endif
-}
-
-static void printMutexAquiredState(void) {
-    printf("    mutex0=%d; mutex1=%d\n", mutex0.acquired, mutex1.acquired);
-}
-
-
-static void printResult(char const* function, bool result) {
-    printf("    %s=%d\n", function, result);
-}
-
 static void initAD4080(void) {
     AD4080_Init(&ad4080, &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin);
+}
+
+static void userButtonPressed(void) {
+    HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
+    AD4080_ScratchPadLoopback(&ad4080, ad4080ScratchValue++);
+    DiagQ_printf("[USER] pressed" ENDL);
+}
+
+static void userButtonReleased(void) {
+    HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
+    AD4080_VerifyChipID(&ad4080);
+    DiagQ_printf("[USER] released" ENDL);
+}
+
+static void processMessage(MainAppMsg_t const * message) {
+    if (!message) {
+        return;
+    }
+    switch (message->event) {
+    case MainAppEvent_Sleep:
+        osDelay(RTOS_ConvertMSToTicks(message->content.sleepTime_ms));
+        break;
+    case MainAppEvent_UserButtonChange:
+        if (message->content.buttonTransition == ButtonTransition_Released) {
+            userButtonReleased();
+        }
+        else if (message->content.buttonTransition == ButtonTransition_Pressed) {
+            userButtonPressed();
+        }
+        break;
+    default:
+        // do nothing
+    }
+}
+
+static void processHeartbeatLED(void) {
+    static uint32_t lastToggleTime_ms = 0u;
+    uint32_t time_ms = (osKernelGetTickCount() * 1000 ) / osKernelGetTickFreq();
+    if ((uint32_t)(time_ms - lastToggleTime_ms) >= DELAY_MS) {
+        HAL_GPIO_TogglePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin);
+        lastToggleTime_ms = time_ms;
+    }
 }
 
 
@@ -74,77 +95,15 @@ static void initAD4080(void) {
  *  @param[in]  argument    TODO
  */
 void MainAppTask_Start(void *argument) {
-#if 0
-    initMutex();
-    for (;;) {
-        bool result;
-        printf(">>> [%lu] start [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
-
-        printf(">>> [%lu] acquire mutex0 [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        result = Mutex_Acquire(&mutex0, MUTEX_TIMEOUT_MS);
-        printResult("Mutex_Acquire(&mutex0)", result);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
-
-        printf(">>> [%lu] acquire mutex0 [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        result = Mutex_Acquire(&mutex0, MUTEX_TIMEOUT_MS);
-        printResult("Mutex_Acquire(&mutex0)", result);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
-
-        printf(">>> [%lu] acquire mutex1 [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        result = Mutex_Acquire(&mutex1, MUTEX_TIMEOUT_MS);
-        printResult("Mutex_Acquire(&mutex1)", result);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
-
-        printf(">>> [%lu] release mutex0 [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        result = Mutex_Release(&mutex0);
-        printResult("Mutex_Release(&mutex0)", result);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
-
-        printf(">>> [%lu] acquire mutex1 [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        result = Mutex_Acquire(&mutex1, MUTEX_TIMEOUT_MS);
-        printResult("Mutex_Acquire(&mutex1)", result);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
-
-        printf(">>> [%lu] acquire mutex0 [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        result = Mutex_Acquire(&mutex0, MUTEX_TIMEOUT_MS);
-        printResult("Mutex_Acquire(&mutex0)", result);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
-
-        printf(">>> [%lu] acquire mutex1 [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        result = Mutex_Acquire(&mutex1, MUTEX_TIMEOUT_MS);
-        printResult("Mutex_Acquire(&mutex1)", result);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
-
-        printf(">>> [%lu] reset [line=%d]\n", osKernelGetTickCount(), __LINE__);
-        result = Mutex_Release(&mutex0);
-        printResult("Mutex_Release(&mutex0)", result);
-        result = Mutex_Release(&mutex1);
-        printResult("Mutex_Release(&mutex1)", result);
-        printMutexAquiredState();
-        osDelay(RTOS_ConvertMSToTicks(FINAL_DELAY_MS));
-        printf("\n");
-
-//        printf(">>> [%lu] NULL [line=%d]\n", osKernelGetTickCount(), __LINE__);
-//        result = Mutex_Acquire(NULL, MUTEX_TIMEOUT_MS);
-//        printResult("Mutex_Acquire(NULL)", result);
-    }
-#else
     uint32_t count = 0u;
     for (;;) {
-        //printf("MainAppTask[%lu]" ENDL, count++);
-        HAL_GPIO_TogglePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin);
-        osDelay(RTOS_ConvertMSToTicks(DELAY_MS));
+        processHeartbeatLED();
+        MainAppMsg_t message;
+        if (osMessageQueueGet(MainAppQHandle, &message, NULL, RTOS_ConvertMSToTicks(TASK_POLL_MS)) == osOK) {
+            processMessage(&message);
+        }
+        osDelay(RTOS_ConvertMSToTicks(TASK_POLL_MS));
     }
-#endif
 }
 
 
@@ -164,9 +123,8 @@ void MainAppTask_Init(void) {
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == B1_USER_Pin) {
         // button polarity is inverted
-        HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
-        AD4080_ScratchPadLoopback(&ad4080, ad4080ScratchValue++);
-        DiagQ_printf("[USER] pressed" ENDL);
+        //MainAppQ_UserButtonPressed();
+        userButtonPressed();
     }
 }
 
@@ -179,8 +137,7 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == B1_USER_Pin) {
         // button polarity is inverted
-        HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
-        AD4080_VerifyChipID(&ad4080);
-        DiagQ_printf("[USER] released" ENDL);
+        //MainAppQ_UserButtonReleased();
+        userButtonReleased();
     }
 }
