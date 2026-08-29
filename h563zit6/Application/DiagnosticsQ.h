@@ -1,9 +1,9 @@
-/** @file       DiagnosticsQueue.h
+/** @file       DiagnosticsQ.h
  *  @brief      Diagnostics queue header file and interface.
  */
 
-#ifndef DIAGNOSTICS_QUEUE_H_
-#define DIAGNOSTICS_QUEUE_H_
+#ifndef DIAGNOSTICS_Q_H_
+#define DIAGNOSTICS_Q_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,4 +56,4 @@ void DiagQ_LogFromISR(DiagSource_t source, const char* fmt, ...);
 }
 #endif
 
-#endif /* DIAGNOSTICS_QUEUE_H_ */
+#endif /* DIAGNOSTICS_Q_H_ */

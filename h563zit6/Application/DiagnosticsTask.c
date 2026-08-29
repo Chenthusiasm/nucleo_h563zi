@@ -1,12 +1,12 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
+#include "DiagnosticsQ.h"
 #include "app_freertos.h"
 #include "ICACHE.h"
 #include "RTOS.h"
 #include "sys_command_line.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
-#include "DiagnosticsQueue.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -73,7 +73,7 @@ void DiagnosticsTask_Start(void *argument) {
         CLI_RUN();
         //processUSB();
         DiagMsg_t message;
-        osStatus_t status = osMessageQueueGet(DiagnosticsQueueHandle, &message, NULL, TASK_POLL_MS);
+        osStatus_t status = osMessageQueueGet(DiagnosticsQHandle, &message, NULL, RTOS_ConvertMSToTicks(TASK_POLL_MS));
         if (status == osOK) {
             printMessage(&message);
         }

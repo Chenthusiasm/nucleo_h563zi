@@ -60,12 +60,22 @@ void Error_Handler(void);
 #define B1_USER_Pin GPIO_PIN_13
 #define B1_USER_GPIO_Port GPIOC
 #define B1_USER_EXTI_IRQn EXTI13_IRQn
+#define SPI_CS_Pin GPIO_PIN_3
+#define SPI_CS_GPIO_Port GPIOF
 #define LD2_YELLOW_Pin GPIO_PIN_4
 #define LD2_YELLOW_GPIO_Port GPIOF
+#define SPI_SCK_Pin GPIO_PIN_5
+#define SPI_SCK_GPIO_Port GPIOA
 #define LD1_GREEN_Pin GPIO_PIN_0
 #define LD1_GREEN_GPIO_Port GPIOB
+#define DATA_CS_Pin GPIO_PIN_14
+#define DATA_CS_GPIO_Port GPIOD
 #define LD3_RED_Pin GPIO_PIN_4
 #define LD3_RED_GPIO_Port GPIOG
+#define SPI_MISO_Pin GPIO_PIN_9
+#define SPI_MISO_GPIO_Port GPIOG
+#define SPI_MOSI_Pin GPIO_PIN_5
+#define SPI_MOSI_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

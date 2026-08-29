@@ -1,9 +1,9 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
+#include "DiagnosticsQ.h"
+
 #include <stdarg.h>
 #include <stdio.h>
-
-#include "DiagnosticsQueue.h"
 
 #include "app_freertos.h"
 #include "RTOS.h"
@@ -60,7 +60,7 @@ void DiagQ_printf(const char* fmt, ...) {
     va_start(args, fmt);
     message.len = format_message(message.text, sizeof(message.text), fmt, args);
     va_end(args);
-    osMessageQueuePut(DiagnosticsQueueHandle, &message, 0u, 0u);
+    osMessageQueuePut(DiagnosticsQHandle, &message, 0u, 0u);
 }
 
 void DiagQ_Log(DiagSource_t source, const char* fmt, ...) {
@@ -73,7 +73,7 @@ void DiagQ_Log(DiagSource_t source, const char* fmt, ...) {
     va_start(args, fmt);
     message.len = format_message(message.text, sizeof(message.text), fmt, args);
     va_end(args);
-    osMessageQueuePut(DiagnosticsQueueHandle, &message, 0u, 100u);
+    osMessageQueuePut(DiagnosticsQHandle, &message, 0u, 100u);
 }
 
 void DiagQ_LogFromISR(DiagSource_t source, const char* fmt, ...) {
@@ -86,5 +86,5 @@ void DiagQ_LogFromISR(DiagSource_t source, const char* fmt, ...) {
     va_start(args, fmt);
     message.len = format_message(message.text, sizeof(message.text), fmt, args);
     va_end(args);
-    osMessageQueuePut(DiagnosticsQueueHandle, &message, 0u, 0u);
+    osMessageQueuePut(DiagnosticsQHandle, &message, 0u, 0u);
 }

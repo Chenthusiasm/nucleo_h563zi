@@ -22,7 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "DiagnosticsQueue.h"
+#include "DiagnosticsQ.h"
+#include "MainAppQ.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -79,16 +80,27 @@ const osMutexAttr_t TestMutex_attributes = {
   .cb_mem = &TestMutexCB,
   .cb_size = sizeof(TestMutexCB),
 };
-/* Definitions for DiagnosticsQueue */
-osMessageQueueId_t DiagnosticsQueueHandle;
-uint8_t DiagnosticsQueueBuffer[ 64 * sizeof( DiagMsg_t ) ];
-osStaticMessageQDef_t DiagnosticsQueueCB;
-const osMessageQueueAttr_t DiagnosticsQueue_attributes = {
-  .name = "DiagnosticsQueue",
-  .cb_mem = &DiagnosticsQueueCB,
-  .cb_size = sizeof(DiagnosticsQueueCB),
-  .mq_mem = &DiagnosticsQueueBuffer,
-  .mq_size = sizeof(DiagnosticsQueueBuffer)
+/* Definitions for DiagnosticsQ */
+osMessageQueueId_t DiagnosticsQHandle;
+uint8_t DiagnosticsQBuffer[ 64 * sizeof( DiagMsg_t ) ];
+osStaticMessageQDef_t DiagnosticsQCB;
+const osMessageQueueAttr_t DiagnosticsQ_attributes = {
+  .name = "DiagnosticsQ",
+  .cb_mem = &DiagnosticsQCB,
+  .cb_size = sizeof(DiagnosticsQCB),
+  .mq_mem = &DiagnosticsQBuffer,
+  .mq_size = sizeof(DiagnosticsQBuffer)
+};
+/* Definitions for MainAppQ */
+osMessageQueueId_t MainAppQHandle;
+uint8_t MainAppQBuffer[ 31 * sizeof( MainAppMsg_t ) ];
+osStaticMessageQDef_t MainAppQCB;
+const osMessageQueueAttr_t MainAppQ_attributes = {
+  .name = "MainAppQ",
+  .cb_mem = &MainAppQCB,
+  .cb_size = sizeof(MainAppQCB),
+  .mq_mem = &MainAppQBuffer,
+  .mq_size = sizeof(MainAppQBuffer)
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -119,8 +131,10 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
-  /* creation of DiagnosticsQueue */
-  DiagnosticsQueueHandle = osMessageQueueNew (64, sizeof(DiagMsg_t), &DiagnosticsQueue_attributes);
+  /* creation of DiagnosticsQ */
+  DiagnosticsQHandle = osMessageQueueNew (64, sizeof(DiagMsg_t), &DiagnosticsQ_attributes);
+  /* creation of MainAppQ */
+  MainAppQHandle = osMessageQueueNew (31, sizeof(MainAppMsg_t), &MainAppQ_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
