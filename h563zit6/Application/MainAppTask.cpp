@@ -1,5 +1,7 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
+#include "MainAppTask.h"
+
 #include <stdbool.h>
 
 #include "app_freertos.h"
@@ -73,6 +75,7 @@ static void processMessage(MainAppMsg_t const * message) {
         break;
     default:
         // do nothing
+        ;
     }
 }
 
@@ -95,7 +98,6 @@ static void processHeartbeatLED(void) {
  *  @param[in]  argument    TODO
  */
 void MainAppTask_Start(void *argument) {
-    uint32_t count = 0u;
     for (;;) {
         processHeartbeatLED();
         MainAppMsg_t message;

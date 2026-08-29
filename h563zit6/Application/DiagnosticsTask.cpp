@@ -1,5 +1,7 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
+#include "DiagnosticsTask.h"
+
 #include "DiagnosticsQ.h"
 #include "app_freertos.h"
 #include "ICACHE.h"
