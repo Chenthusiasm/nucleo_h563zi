@@ -6,7 +6,6 @@
 #include "Mutex.h"
 #include "RTOS.h"
 #include "sys_command_line.h"
-#include "AD4080.h"
 #include "spi.h"
 #include "DiagnosticsQ.h"
 #include "MainAppQ.h"
@@ -29,29 +28,19 @@
 
 /* Internal variables ----------------------------------------------------------------------------*/
 
-static AD4080_Handle ad4080;
-
-static uint8_t ad4080ScratchValue = 0;
-
 
 /* Internal function prototypes ------------------------------------------------------------------*/
 
 
 /* Internal functions ----------------------------------------------------------------------------*/
 
-static void initAD4080(void) {
-    AD4080_Init(&ad4080, &hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin);
-}
-
 static void userButtonPressed(void) {
     HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
-    AD4080_ScratchPadLoopback(&ad4080, ad4080ScratchValue++);
     DiagQ_printf("[USER] pressed" ENDL);
 }
 
 static void userButtonReleased(void) {
     HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
-    AD4080_VerifyChipID(&ad4080);
     DiagQ_printf("[USER] released" ENDL);
 }
 
@@ -95,7 +84,6 @@ static void processHeartbeatLED(void) {
  *  @param[in]  argument    TODO
  */
 void MainAppTask_Start(void *argument) {
-    uint32_t count = 0u;
     for (;;) {
         processHeartbeatLED();
         MainAppMsg_t message;
@@ -111,7 +99,6 @@ void MainAppTask_Start(void *argument) {
  *  @brief Initialization for the MainApp task.
  */
 void MainAppTask_Init(void) {
-    initAD4080();
 }
 
 
