@@ -1,10 +1,10 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
+#include "MainAppQ.h"
+
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-
-#include "MainAppQ.h"
 
 #include "app_freertos.h"
 #include "RTOS.h"

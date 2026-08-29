@@ -1,6 +1,7 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
-#include <DiagnosticsQ.h>
+#include "DiagnosticsQ.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 

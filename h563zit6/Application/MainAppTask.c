@@ -123,8 +123,8 @@ void MainAppTask_Init(void) {
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == B1_USER_Pin) {
         // button polarity is inverted
-        //MainAppQ_UserButtonPressed();
-        userButtonPressed();
+        MainAppQ_UserButtonPressed();
+        //userButtonPressed();
     }
 }
 
@@ -137,7 +137,7 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == B1_USER_Pin) {
         // button polarity is inverted
-        //MainAppQ_UserButtonReleased();
-        userButtonReleased();
+        MainAppQ_UserButtonReleased();
+        //userButtonReleased();
     }
 }
