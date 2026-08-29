@@ -1,5 +1,7 @@
 /* Includes --------------------------------------------------------------------------------------*/
 
+#include "MainAppTask.h"
+
 #include <stdbool.h>
 
 #include "app_freertos.h"
@@ -62,6 +64,7 @@ static void processMessage(MainAppMsg_t const * message) {
         break;
     default:
         // do nothing
+        ;
     }
 }
 

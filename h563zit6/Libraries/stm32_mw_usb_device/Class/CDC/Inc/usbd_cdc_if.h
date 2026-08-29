@@ -64,7 +64,7 @@ typedef uint16_t (*USB_CDC_ReceiveCallback_t)(uint8_t *const buffer, uint16_t le
 
 USBD_StatusTypeDef USB_CDC_Init(void);
 USBD_StatusTypeDef USB_CDC_Deinit(void);
-USBD_StatusTypeDef USB_CDC_Transmit(uint8_t* const buffer, uint16_t length);
+USBD_StatusTypeDef USB_CDC_Transmit(uint8_t const* const buffer, uint16_t length);
 USBD_StatusTypeDef USB_CDC_RegisterReceiveCallback(USB_CDC_ReceiveCallback_t const callback);
 USBD_StatusTypeDef USB_CDC_DeregisterReceiveCallback(void);
 

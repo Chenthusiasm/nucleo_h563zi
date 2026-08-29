@@ -323,7 +323,7 @@ USBD_StatusTypeDef USB_CDC_Deinit(void) {
  * @param[in]   length  Number of bytes to transmit.
  * @return  The USBD_StatusTypeDef; if successful, USBD_OK.
  */
-USBD_StatusTypeDef USB_CDC_Transmit(uint8_t* const buffer, uint16_t length) {
+USBD_StatusTypeDef USB_CDC_Transmit(uint8_t const* const buffer, uint16_t length) {
     USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)self.usbdHandle.pClassData;
     if (hcdc == NULL) {
         // no USB connection
