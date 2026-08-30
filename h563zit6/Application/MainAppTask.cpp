@@ -18,11 +18,12 @@
 
 /* Internal define -------------------------------------------------------------------------------*/
 
-#define MUTEX_TIMEOUT_MS                (5u)
-#define DELAY_MS                        (500u)
-#define FINAL_DELAY_MS                  (2000u)
-#define LONG_DELAY_MS                   (5000u)
-#define TASK_POLL_MS                    (5u)
+#define TASK_POLL_MS                    (1u)
+#define TASK_POLL_TICKS                 (RTOS_ConvertMSToTicks(TASK_POLL_MS))
+#define DEQUEUE_BATCH_BUDGET_MS         (3u)
+#define DEQUEUE_BATCH_BUDGET_TICKS      (RTOS_ConvertMSToTicks(DEQUEUE_BATCH_BUDGET_MS))
+#define HEARTBEAT_PERIOD_MS             (1000u)
+#define HEARTBEAT_PERIOD_TICKS          (RTOS_ConvertMSToTicks(HEARTBEAT_PERIOD_MS))
 
 
 /* Internal macro --------------------------------------------------------------------------------*/
@@ -38,12 +39,12 @@
 
 static void userButtonPressed(void) {
     HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
-    DiagQ_printf("[USER] pressed" ENDL);
+    DiagQ_Log(DiagSource_MainApp, "[USER] pressed");
 }
 
 static void userButtonReleased(void) {
     HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
-    DiagQ_printf("[USER] released" ENDL);
+    DiagQ_Log(DiagSource_MainApp, "[USER] released");
 }
 
 static void processMessage(MainAppMsg_t const * message) {
@@ -71,7 +72,7 @@ static void processMessage(MainAppMsg_t const * message) {
 static void processHeartbeatLED(void) {
     static uint32_t lastToggleTime_ms = 0u;
     uint32_t time_ms = (osKernelGetTickCount() * 1000 ) / osKernelGetTickFreq();
-    if ((uint32_t)(time_ms - lastToggleTime_ms) >= DELAY_MS) {
+    if ((uint32_t)(time_ms - lastToggleTime_ms) >= (HEARTBEAT_PERIOD_TICKS / 2)) {
         HAL_GPIO_TogglePin(LD1_GREEN_GPIO_Port, LD1_GREEN_Pin);
         lastToggleTime_ms = time_ms;
     }
@@ -88,12 +89,16 @@ static void processHeartbeatLED(void) {
  */
 void MainAppTask_Start(void *argument) {
     for (;;) {
-        processHeartbeatLED();
-        MainAppMsg_t message;
-        if (osMessageQueueGet(MainAppQHandle, &message, NULL, RTOS_ConvertMSToTicks(TASK_POLL_MS)) == osOK) {
+        uint32_t const batchStart = osKernelGetTickCount();
+        while ((osKernelGetTickCount() - batchStart) < DEQUEUE_BATCH_BUDGET_TICKS) {
+            MainAppMsg_t message;
+            if (osMessageQueueGet(MainAppQHandle, &message, nullptr, 0) != osOK) {
+                break; // queue's empty, don't continue spinning
+            }
             processMessage(&message);
         }
-        osDelay(RTOS_ConvertMSToTicks(TASK_POLL_MS));
+        processHeartbeatLED();
+        osDelay(TASK_POLL_TICKS);
     }
 }
 
@@ -114,7 +119,6 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == B1_USER_Pin) {
         // button polarity is inverted
         MainAppQ_UserButtonPressed();
-        //userButtonPressed();
     }
 }
 
@@ -128,6 +132,5 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == B1_USER_Pin) {
         // button polarity is inverted
         MainAppQ_UserButtonReleased();
-        //userButtonReleased();
     }
 }

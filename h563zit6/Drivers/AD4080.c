@@ -38,7 +38,7 @@ uint8_t AD4080_ReadRegister(AD4080_Handle *dev, uint16_t address) {
 
     AD4080_CS_Low(dev);
     HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(dev->hspi, tx, rx, sizeof(tx), 10);
-    //DiagQ_printf("%s(%04x)=%d\r\n", __func__, address, status);
+    (void) status;
     AD4080_CS_High(dev);
 
     // The register value comes back during the data-phase byte, i.e. the third
@@ -58,7 +58,7 @@ void AD4080_WriteRegister(AD4080_Handle *dev, uint16_t address, uint8_t value) {
 
     AD4080_CS_Low(dev);
     HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(dev->hspi, tx, rx, sizeof(tx), 10);
-    //DiagQ_printf("%s(%04x, %02x)=%d\r\n", __func__, address, value, status);
+    (void) status;
     AD4080_CS_High(dev);
 }
 

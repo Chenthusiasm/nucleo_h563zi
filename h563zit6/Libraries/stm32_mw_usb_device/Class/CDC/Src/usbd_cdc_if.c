@@ -332,7 +332,8 @@ USBD_StatusTypeDef USB_CDC_Transmit(uint8_t const* const buffer, uint16_t length
     if (hcdc->TxState != 0) {
         return USBD_BUSY;
     }
-    USBD_CDC_SetTxBuffer(&self.usbdHandle, buffer, length);
+    // const is being removed but the lower-level drivers do not modify the memory
+    USBD_CDC_SetTxBuffer(&self.usbdHandle, (uint8_t*)buffer, length);
     return USBD_CDC_TransmitPacket(&self.usbdHandle);
 }
 

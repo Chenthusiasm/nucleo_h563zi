@@ -16,7 +16,10 @@
 
 /* Internal define -------------------------------------------------------------------------------*/
 
-#define TASK_POLL_MS                    (5u)
+#define TASK_POLL_MS                    (2u)
+#define TASK_POLL_TICKS                 (RTOS_ConvertMSToTicks(TASK_POLL_MS))
+#define DEQUEUE_BATCH_BUDGET_MS         (5u)
+#define DEQUEUE_BATCH_BUDGET_TICKS      (RTOS_ConvertMSToTicks(DEQUEUE_BATCH_BUDGET_MS))
 
 
 /* Internal macro --------------------------------------------------------------------------------*/
@@ -30,31 +33,17 @@
 
 /* Internal functions ----------------------------------------------------------------------------*/
 
-extern USBD_HandleTypeDef hUsbDeviceFS;
-static void processUSB(void) {
-    static uint16_t count = 0u;
-    if (count++ > 2000u) {
-        static uint8_t const txMessageBuffer[] = "My USB is working!\n";
-        USB_CDC_Transmit(txMessageBuffer, sizeof(txMessageBuffer));
-        count = 0u;
-    }
-}
-
-
-static uint16_t usbReceiveCallback(uint8_t* const Buf, uint16_t Len) {
-    printf("%s", Buf);
-    return Len;
-}
-
 static void printMessage(DiagMsg_t const* message) {
     uint32_t ms = (message->timestamp_ticks * 1000 ) / osKernelGetTickFreq();
     uint32_t ms_int = ms / 1000u;
     uint32_t ms_fraction = ms % 1000u;
     if (message->source == DiagSource_printf) {
+        // print message as-is
         printf("[%lu.%03lums] %.*s",
             ms_int, ms_fraction, message->len, message->text);
     }
     else {
+        // print message with ENDL appended so the message is printed on one line
         printf("[%lu.%03lums:%s] %.*s" ENDL,
             ms_int, ms_fraction, DiagQ_GetSourceStr(message->source),
             message->len, message->text);
@@ -72,13 +61,16 @@ static void printMessage(DiagMsg_t const* message) {
  */
 void DiagnosticsTask_Start(void *argument) {
     for (;;) {
-        CLI_RUN();
-        //processUSB();
-        DiagMsg_t message;
-        osStatus_t status = osMessageQueueGet(DiagnosticsQHandle, &message, NULL, RTOS_ConvertMSToTicks(TASK_POLL_MS));
-        if (status == osOK) {
+        uint32_t const batchStart = osKernelGetTickCount();
+        while ((osKernelGetTickCount() - batchStart) < DEQUEUE_BATCH_BUDGET_TICKS) {
+            CLI_RUN();
+            DiagMsg_t message;
+            if (osMessageQueueGet(DiagnosticsQHandle, &message, nullptr, 0) != osOK) {
+                break; // queue's empty, don't continue spinning
+            }
             printMessage(&message);
         }
+        osDelay(TASK_POLL_TICKS);
     }
 }
 
@@ -87,9 +79,8 @@ void DiagnosticsTask_Start(void *argument) {
  *  @brief  Initialization for the Diagnostics task.
  */
 void DiagnosticsTask_Init(void) {
-    //CLI_INIT(&huart3, USART3_IRQn);
     ICACHE_Init();
     USBD_StatusTypeDef status = USB_CDC_Init();
+    (void) status;
     CLI_INIT();
-    //USB_CDC_RegisterReceiveCallback(usbReceiveCallback);
 }
