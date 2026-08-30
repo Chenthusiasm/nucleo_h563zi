@@ -75,8 +75,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::INTERFACE_CONFIG_A;
-        static constexpr Fields   Default = { .raw = 0x10 };
+        static constexpr const char* Name    = "INTERFACE_CONFIG_A";
+        static constexpr Register    Address = Register::INTERFACE_CONFIG_A;
+        static constexpr Fields      Default = { .raw = 0x10 };
     };
 
     /**
@@ -93,8 +94,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::INTERFACE_CONFIG_B;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "INTERFACE_CONFIG_B";
+        static constexpr Register    Address = Register::INTERFACE_CONFIG_B;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -109,8 +111,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::DEVICE_CONFIG;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "DEVICE_CONFIG";
+        static constexpr Register    Address = Register::DEVICE_CONFIG;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -125,8 +128,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::CHIP_TYPE;
-        static constexpr Fields   Default = { .raw = 0x07 };
+        static constexpr const char* Name    = "CHIP_TYPE";
+        static constexpr Register    Address = Register::CHIP_TYPE;
+        static constexpr Fields      Default = { .raw = 0x07 };
     };
 
     /**
@@ -143,11 +147,12 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::PRODUCT_ID_L;
+        static constexpr const char* Name    = "PRODUCT_ID_L";
+        static constexpr Register    Address = Register::PRODUCT_ID_L;
 #ifdef AD4083
-        static constexpr Fields   Default = { .raw = 0x53 };
+        static constexpr Fields      Default = { .raw = 0x53 };
 #else
-        static constexpr Fields   Default = { .raw = 0x50 };
+        static constexpr Fields      Default = { .raw = 0x50 };
 #endif
     };
 
@@ -162,8 +167,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::PRODUCT_ID_H;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "PRODUCT_ID_H";
+        static constexpr Register    Address = Register::PRODUCT_ID_H;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -178,8 +184,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::CHIP_GRADE;
-        static constexpr Fields   Default = { .raw = 0x02 };
+        static constexpr const char* Name    = "CHIP_GRADE";
+        static constexpr Register    Address = Register::CHIP_GRADE;
+        static constexpr Fields      Default = { .raw = 0x02 };
     };
 
     /**
@@ -195,8 +202,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::SCRATCH_PAD;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "SCRATCH_PAD";
+        static constexpr Register    Address = Register::SCRATCH_PAD;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -211,8 +219,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::SPI_REVISION;
-        static constexpr Fields   Default = { .raw = 0x83 };
+        static constexpr const char* Name    = "SPI_REVISION";
+        static constexpr Register    Address = Register::SPI_REVISION;
+        static constexpr Fields      Default = { .raw = 0x83 };
     };
 
     /**
@@ -226,8 +235,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::VENDOR_L;
-        static constexpr Fields   Default = { .raw = 0x56 };
+        static constexpr const char* Name    = "VENDOR_L";
+        static constexpr Register    Address = Register::VENDOR_L;
+        static constexpr Fields      Default = { .raw = 0x56 };
     };
 
     /**
@@ -241,8 +251,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::VENDOR_H;
-        static constexpr Fields   Default = { .raw = 0x04 };
+        static constexpr const char* Name    = "VENDOR_H";
+        static constexpr Register    Address = Register::VENDOR_H;
+        static constexpr Fields      Default = { .raw = 0x04 };
     };
 
     /**
@@ -258,8 +269,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::STREAM_MODE;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "STREAM_MODE";
+        static constexpr Register    Address = Register::STREAM_MODE;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -275,8 +287,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::TRANSFER_CONFIG;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "TRANSFER_CONFIG";
+        static constexpr Register    Address = Register::TRANSFER_CONFIG;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -299,8 +312,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::INTERFACE_CONFIG_C;
-        static constexpr Fields   Default = { .raw = 0x23 };
+        static constexpr const char* Name    = "INTERFACE_CONFIG_C";
+        static constexpr Register    Address = Register::INTERFACE_CONFIG_C;
+        static constexpr Fields      Default = { .raw = 0x23 };
     };
 
     /**
@@ -325,8 +339,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::INTERFACE_STATUS_A;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "INTERFACE_STATUS_A";
+        static constexpr Register    Address = Register::INTERFACE_STATUS_A;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -350,8 +365,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::DEVICE_STATUS;
-        static constexpr Fields   Default = { .raw = 0x09 };
+        static constexpr const char* Name    = "DEVICE_STATUS";
+        static constexpr Register    Address = Register::DEVICE_STATUS;
+        static constexpr Fields      Default = { .raw = 0x09 };
     };
 
     /**
@@ -376,8 +392,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::ADC_DATA_INTF_CONFIG_A;
-        static constexpr Fields   Default = { .raw = 0x40 };
+        static constexpr const char* Name    = "ADC_DATA_INTF_CONFIG_A";
+        static constexpr Register    Address = Register::ADC_DATA_INTF_CONFIG_A;
+        static constexpr Fields      Default = { .raw = 0x40 };
     };
 
     /**
@@ -395,8 +412,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::ADC_DATA_INTF_CONFIG_B;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "ADC_DATA_INTF_CONFIG_B";
+        static constexpr Register    Address = Register::ADC_DATA_INTF_CONFIG_B;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -412,8 +430,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::ADC_DATA_INTF_CONFIG_C;
-        static constexpr Fields   Default = { .raw = 0x20 };
+        static constexpr const char* Name    = "ADC_DATA_INTF_CONFIG_C";
+        static constexpr Register    Address = Register::ADC_DATA_INTF_CONFIG_C;
+        static constexpr Fields      Default = { .raw = 0x20 };
     };
 
     /**
@@ -431,8 +450,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::PWR_CTRL;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "PWR_CTRL";
+        static constexpr Register    Address = Register::PWR_CTRL;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -453,8 +473,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::GPIO_CONFIG_A;
-        static constexpr Fields   Default = { .raw = 0x01 };
+        static constexpr const char* Name    = "GPIO_CONFIG_A";
+        static constexpr Register    Address = Register::GPIO_CONFIG_A;
+        static constexpr Fields      Default = { .raw = 0x01 };
     };
 
     /**
@@ -474,8 +495,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::GPIO_CONFIG_B;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "GPIO_CONFIG_B";
+        static constexpr Register    Address = Register::GPIO_CONFIG_B;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -492,8 +514,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::GPIO_CONFIG_C;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "GPIO_CONFIG_C";
+        static constexpr Register    Address = Register::GPIO_CONFIG_C;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -512,8 +535,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::GENERAL_CONFIG;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "GENERAL_CONFIG";
+        static constexpr Register    Address = Register::GENERAL_CONFIG;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
     /**
@@ -533,8 +557,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::FIFO_WATERMARK;
-        static constexpr Fields   Default = { .raw = 0x4000 };
+        static constexpr const char* Name    = "FIFO_WATERMARK";
+        static constexpr Register    Address = Register::FIFO_WATERMARK;
+        static constexpr Fields      Default = { .raw = 0x4000 };
     };
 
     /**
@@ -551,8 +576,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::EVENT_HYSTERESIS;
-        static constexpr Fields   Default = { .raw = 0x0000 };
+        static constexpr const char* Name    = "EVENT_HYSTERESIS";
+        static constexpr Register    Address = Register::EVENT_HYSTERESIS;
+        static constexpr Fields      Default = { .raw = 0x0000 };
     };
 
     /**
@@ -569,8 +595,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::EVENT_DETECTION_HI;
-        static constexpr Fields   Default = { .raw = 0x0000 };
+        static constexpr const char* Name    = "EVENT_DETECTION_HI";
+        static constexpr Register    Address = Register::EVENT_DETECTION_HI;
+        static constexpr Fields      Default = { .raw = 0x0000 };
     };
 
     /**
@@ -587,8 +614,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::EVENT_DETECTION_LO;
-        static constexpr Fields   Default = { .raw = 0x0000 };
+        static constexpr const char* Name    = "EVENT_DETECTION_LO";
+        static constexpr Register    Address = Register::EVENT_DETECTION_LO;
+        static constexpr Fields      Default = { .raw = 0x0000 };
     };
 
     /**
@@ -605,8 +633,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::OFFSET;
-        static constexpr Fields   Default = { .raw = 0x0000 };
+        static constexpr const char* Name    = "OFFSET";
+        static constexpr Register    Address = Register::OFFSET;
+        static constexpr Fields      Default = { .raw = 0x0000 };
     };
 
     /**
@@ -624,8 +653,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::GAIN;
-        static constexpr Fields   Default = { .raw = 0x0200 };
+        static constexpr const char* Name    = "GAIN";
+        static constexpr Register    Address = Register::GAIN;
+        static constexpr Fields      Default = { .raw = 0x0200 };
     };
 
     /**
@@ -645,8 +675,9 @@ namespace AD408x {
             };
         };
 
-        static constexpr Register Address = Register::FILTER_CONFIG;
-        static constexpr Fields   Default = { .raw = 0x00 };
+        static constexpr const char* Name    = "FILTER_CONFIG";
+        static constexpr Register    Address = Register::FILTER_CONFIG;
+        static constexpr Fields      Default = { .raw = 0x00 };
     };
 
 }

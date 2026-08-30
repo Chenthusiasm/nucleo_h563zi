@@ -8,6 +8,7 @@
 
 #include "AD408xConfig.hpp"
 
+#include "AD408xRegisters.hpp"
 #include "DiagnosticsQ.h"
 
 // Swap this single line to redirect all LOG() calls in this file:
@@ -102,4 +103,50 @@ bool Config::ScratchPadLoopback(uint8_t testValue) {
     LOG("SCRATCH_PAD wrote 0x%02X, read back 0x%02X\r\n", testValue, readBack.raw);
 
     return readBack.raw == testValue;
+}
+
+void Config::LogMismatch(const char *name, uint16_t actual, uint16_t expected, bool isTwoByte) {
+    if (isTwoByte) {
+        LOG("%s: %04x != %04x\r\n", name, actual, expected);
+    } else {
+        LOG("%s: %02x != %02x\r\n", name, actual, expected);
+    }
+}
+
+int Config::TestReadAll() {
+    PrepareTransactionGroup();
+
+    int invalid = 0;
+    if (!CheckDefaultRaw<INTERFACE_CONFIG_A>()) { ++invalid; }
+    if (!CheckDefaultRaw<INTERFACE_CONFIG_B>()) { ++invalid; }
+    if (!CheckDefaultRaw<DEVICE_CONFIG>()) { ++invalid; }
+    if (!CheckDefaultRaw<CHIP_TYPE>()) { ++invalid; }
+    if (!CheckDefaultRaw<PRODUCT_ID_L>()) { ++invalid; }
+    if (!CheckDefaultRaw<PRODUCT_ID_H>()) { ++invalid; }
+    if (!CheckDefaultRaw<CHIP_GRADE>()) { ++invalid; }
+    if (!CheckDefaultRaw<SCRATCH_PAD>()) { ++invalid; }
+    if (!CheckDefaultRaw<SPI_REVISION>()) { ++invalid; }
+    if (!CheckDefaultRaw<VENDOR_L>()) { ++invalid; }
+    if (!CheckDefaultRaw<VENDOR_H>()) { ++invalid; }
+    if (!CheckDefaultRaw<STREAM_MODE>()) { ++invalid; }
+    if (!CheckDefaultRaw<TRANSFER_CONFIG>()) { ++invalid; }
+    if (!CheckDefaultRaw<INTERFACE_CONFIG_C>()) { ++invalid; }
+    if (!CheckDefaultRaw<INTERFACE_STATUS_A>()) { ++invalid; }
+    if (!CheckDefaultRaw<DEVICE_STATUS>()) { ++invalid; }
+    if (!CheckDefaultRaw<ADC_DATA_INTF_CONFIG_A>()) { ++invalid; }
+    if (!CheckDefaultRaw<ADC_DATA_INTF_CONFIG_B>()) { ++invalid; }
+    if (!CheckDefaultRaw<ADC_DATA_INTF_CONFIG_C>()) { ++invalid; }
+    if (!CheckDefaultRaw<PWR_CTRL>()) { ++invalid; }
+    if (!CheckDefaultRaw<GPIO_CONFIG_A>()) { ++invalid; }
+    if (!CheckDefaultRaw<GPIO_CONFIG_B>()) { ++invalid; }
+    if (!CheckDefaultRaw<GPIO_CONFIG_C>()) { ++invalid; }
+    if (!CheckDefaultRaw<GENERAL_CONFIG>()) { ++invalid; }
+    if (!CheckDefaultRaw<FIFO_WATERMARK>()) { ++invalid; }
+    if (!CheckDefaultRaw<EVENT_HYSTERESIS>()) { ++invalid; }
+    if (!CheckDefaultRaw<EVENT_DETECTION_HI>()) { ++invalid; }
+    if (!CheckDefaultRaw<EVENT_DETECTION_LO>()) { ++invalid; }
+    if (!CheckDefaultRaw<OFFSET>()) { ++invalid; }
+    if (!CheckDefaultRaw<GAIN>()) { ++invalid; }
+    if (!CheckDefaultRaw<FILTER_CONFIG>()) { ++invalid; }
+    return invalid;
 }

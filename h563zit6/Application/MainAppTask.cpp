@@ -3,12 +3,14 @@
 #include "MainAppTask.h"
 
 #include <stdbool.h>
+#include <type_traits>
 
 #include "app_freertos.h"
 #include "Mutex.h"
 #include "RTOS.h"
 #include "sys_command_line.h"
 #include "AD408xConfig.hpp"
+#include "AD408xRegisters.hpp"
 #include "spi.h"
 #include "DiagnosticsQ.h"
 #include "MainAppQ.h"
@@ -32,9 +34,12 @@
 
 /* Internal variables ----------------------------------------------------------------------------*/
 
+static bool adcReady = false;
+static bool adcTestedReadAll = false;
+
 static AD408x::Config adcConfig(&hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin);
 
-static uint8_t ad4080ScratchValue = 0;
+static uint8_t ad408xScratchValue = 0;
 
 
 /* Internal function prototypes ------------------------------------------------------------------*/
@@ -42,15 +47,38 @@ static uint8_t ad4080ScratchValue = 0;
 
 /* Internal functions ----------------------------------------------------------------------------*/
 
+static void checkADCReady() {
+    if (adcReady) {
+        // ADC already confirmed ready, return early
+        return;
+    }
+    AD408x::INTERFACE_STATUS_A::Fields fields = adcConfig.Read<AD408x::INTERFACE_STATUS_A>();
+    adcReady = (fields.NOT_READY_ERR == 0);
+    if (adcReady) {
+        DiagQ_Log(DiagSource_MainApp, "AD408x ADC is ready!");
+        
+    }
+}
+
 static void userButtonPressed(void) {
     HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_SET);
-    adcConfig.ScratchPadLoopback(ad4080ScratchValue++);
+    if (adcReady) {
+        if (adcTestedReadAll) {
+            adcConfig.ScratchPadLoopback(ad408xScratchValue++);
+        } else {
+            int invalid = adcConfig.TestReadAll();
+            adcTestedReadAll = true;
+            DiagQ_Log(DiagSource_MainApp, "AD408x: %d registers didn't match the reset values", invalid);
+        }
+    }
     DiagQ_Log(DiagSource_MainApp, "[USER] pressed");
 }
 
 static void userButtonReleased(void) {
     HAL_GPIO_WritePin(LD2_YELLOW_GPIO_Port, LD2_YELLOW_Pin, GPIO_PIN_RESET);
-    adcConfig.VerifyChipID();
+    if (adcReady && adcTestedReadAll) {
+        adcConfig.VerifyChipID();
+    }
     DiagQ_Log(DiagSource_MainApp, "[USER] released");
 }
 
@@ -104,6 +132,7 @@ void MainAppTask_Start(void *argument) {
             }
             processMessage(&message);
         }
+        checkADCReady();
         processHeartbeatLED();
         osDelay(TASK_POLL_TICKS);
     }
