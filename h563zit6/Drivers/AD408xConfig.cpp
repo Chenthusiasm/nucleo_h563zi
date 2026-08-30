@@ -79,10 +79,10 @@ void Config::WriteRegistersRaw(uint16_t address, const uint8_t *buffer, uint8_t 
 bool Config::VerifyChipID() {
     PrepareTransactionGroup();
 
-    ChipType::Fields chipType = ReadRaw<ChipType>();
-    ProductIDL::Fields productIdL = ReadRaw<ProductIDL>();
-    ProductIDH::Fields productIdH = ReadRaw<ProductIDH>();
-    ChipGrade::Fields chipGrade = ReadRaw<ChipGrade>();
+    CHIP_TYPE::Fields chipType = ReadRaw<CHIP_TYPE>();
+    PRODUCT_ID_L::Fields productIdL = ReadRaw<PRODUCT_ID_L>();
+    PRODUCT_ID_H::Fields productIdH = ReadRaw<PRODUCT_ID_H>();
+    CHIP_GRADE::Fields chipGrade = ReadRaw<CHIP_GRADE>();
 
     LOG("CHIP_TYPE=0x%02X (expect 0x07)\r\n", chipType.raw);
     LOG("PRODUCT_ID=0x%04X\r\n", static_cast<uint16_t>((productIdH.raw << 8) | productIdL.raw));
@@ -94,10 +94,10 @@ bool Config::VerifyChipID() {
 bool Config::ScratchPadLoopback(uint8_t testValue) {
     PrepareTransactionGroup();
 
-    ScratchPad::Fields value;
+    SCRATCH_PAD::Fields value;
     value.SCRATCH_VALUE = testValue;
-    WriteRaw<ScratchPad>(value);
-    ScratchPad::Fields readBack = ReadRaw<ScratchPad>();
+    WriteRaw<SCRATCH_PAD>(value);
+    SCRATCH_PAD::Fields readBack = ReadRaw<SCRATCH_PAD>();
 
     LOG("SCRATCH_PAD wrote 0x%02X, read back 0x%02X\r\n", testValue, readBack.raw);
 
