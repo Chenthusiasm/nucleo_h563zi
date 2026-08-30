@@ -26,9 +26,12 @@
 
 /* Internal functions ----------------------------------------------------------------------------*/
 
-static size_t format_message(char* msg, size_t len, const char *fmt, va_list args) {
+static size_t formatMessage(char* msg, size_t len, const char *fmt, va_list args) {
+    if ((msg == nullptr) || (len == 0u) || (fmt == nullptr)) {
+        return 0u;
+    }
     int n = vsnprintf(msg, len, fmt, args);
-    size_t msgLen = (n < 0) ? (0) : ((size_t)((n >= len) ? (len - 1) : (n)));
+    size_t msgLen = (n < 0) ? (0) : ((size_t)((n >= (int)len) ? (len - 1) : (n)));
     return msgLen;
 }
 
@@ -58,7 +61,7 @@ void DiagQ_printf(const char* fmt, ...) {
 
     va_list args;
     va_start(args, fmt);
-    message.len = format_message(message.text, sizeof(message.text), fmt, args);
+    message.len = formatMessage(message.text, sizeof(message.text), fmt, args);
     va_end(args);
     osMessageQueuePut(DiagnosticsQHandle, &message, 0u, 0u);
 }
@@ -71,7 +74,7 @@ void DiagQ_Log(DiagSource_t source, const char* fmt, ...) {
 
     va_list args;
     va_start(args, fmt);
-    message.len = format_message(message.text, sizeof(message.text), fmt, args);
+    message.len = formatMessage(message.text, sizeof(message.text), fmt, args);
     va_end(args);
     osMessageQueuePut(DiagnosticsQHandle, &message, 0u, 100u);
 }
@@ -84,7 +87,7 @@ void DiagQ_LogFromISR(DiagSource_t source, const char* fmt, ...) {
 
     va_list args;
     va_start(args, fmt);
-    message.len = format_message(message.text, sizeof(message.text), fmt, args);
+    message.len = formatMessage(message.text, sizeof(message.text), fmt, args);
     va_end(args);
     osMessageQueuePut(DiagnosticsQHandle, &message, 0u, 0u);
 }
