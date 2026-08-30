@@ -8,7 +8,7 @@
 #include "Mutex.h"
 #include "RTOS.h"
 #include "sys_command_line.h"
-#include "AD4080.hpp"
+#include "AD408xConfig.hpp"
 #include "spi.h"
 #include "DiagnosticsQ.h"
 #include "MainAppQ.h"
@@ -31,7 +31,7 @@
 
 /* Internal variables ----------------------------------------------------------------------------*/
 
-static AD4080 adcConfig(&hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin);
+static AD408x::Config adcConfig(&hspi1, SPI_CS_GPIO_Port, SPI_CS_Pin);
 
 static uint8_t ad4080ScratchValue = 0;
 
