@@ -68,12 +68,18 @@ void Error_Handler(void);
 #define SPI_SCK_GPIO_Port GPIOA
 #define LD1_GREEN_Pin GPIO_PIN_0
 #define LD1_GREEN_GPIO_Port GPIOB
+#define FIFO_FULL_Pin GPIO_PIN_11
+#define FIFO_FULL_GPIO_Port GPIOE
+#define ALERT_Pin GPIO_PIN_13
+#define ALERT_GPIO_Port GPIOE
 #define DATA_CS_Pin GPIO_PIN_14
 #define DATA_CS_GPIO_Port GPIOD
 #define LD3_RED_Pin GPIO_PIN_4
 #define LD3_RED_GPIO_Port GPIOG
 #define SPI_MISO_Pin GPIO_PIN_9
 #define SPI_MISO_GPIO_Port GPIOG
+#define FIFO_START_Pin GPIO_PIN_12
+#define FIFO_START_GPIO_Port GPIOG
 #define SPI_MOSI_Pin GPIO_PIN_5
 #define SPI_MOSI_GPIO_Port GPIOB
 
