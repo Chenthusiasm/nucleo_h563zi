@@ -30,6 +30,8 @@ namespace AD408x {
      *     one SPI frame under the AD408x default interface settings (STRICT_REGISTER_ACCESS = 1, ADDR_ASCENSION = 0).
      *   - NSS is software-controlled (SPI_CS is a plain GPIO, not the peripheral's hardware NSS), per the project's
      *     SPI1 configuration.
+     *   - Validated at 15.625MHz (/16 off 250MHz SPI1 kernel clock); /8 (31.25MHz) is unreliable over the Zio
+     *     interconnect
      */
     class Config {
     public:

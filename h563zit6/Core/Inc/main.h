@@ -70,6 +70,7 @@ void Error_Handler(void);
 #define LD1_GREEN_GPIO_Port GPIOB
 #define FIFO_FULL_Pin GPIO_PIN_11
 #define FIFO_FULL_GPIO_Port GPIOE
+#define FIFO_FULL_EXTI_IRQn EXTI11_IRQn
 #define ALERT_Pin GPIO_PIN_13
 #define ALERT_GPIO_Port GPIOE
 #define DATA_CS_Pin GPIO_PIN_14
