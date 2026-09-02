@@ -143,6 +143,15 @@ namespace AD408x {
          */
         int TestReadAll();
 
+        /**
+         * @brief Returns the HAL SPI handle this Config instance was constructed with.
+         *
+         * @return The HAL SPI handle for the CFG bus.
+         */
+        constexpr SPI_HandleTypeDef *GetHSPI() const {
+            return hspi;
+        }
+
     private:
         /// R/W bit position in the 16-bit instruction phase (bit 15 = 1 for read).
         static constexpr uint16_t ReadBit = 0x8000U;

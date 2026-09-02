@@ -33,9 +33,22 @@ void DataFIFO::OnArm() {
     // Immediate trigger mode needs nothing beyond the shared WATERMARK/FIFO_MODE writes Arm() already does.
 }
 
+void DataFIFO::LockSharedBus() const {
+    if (sharedBus) {
+        __disable_irq();
+    }
+}
+
+void DataFIFO::UnlockSharedBus() const {
+    if (sharedBus) {
+        __enable_irq();
+    }
+}
+
 void DataFIFO::Init() {
     CS_High(); // DCS idles high (active low)
 
+    LockSharedBus();
     // FIFO_FULL is wired to AD408x GPIO3 on this board revision. Read-modify-write since GPIO_CONFIG_A and
     // GPIO_CONFIG_C are shared registers covering all four GPIOs.
     GPIO_CONFIG_A::Fields gpioA = cfg->Read<GPIO_CONFIG_A>();
@@ -47,6 +60,7 @@ void DataFIFO::Init() {
     cfg->Write<GPIO_CONFIG_C>(gpioC);
 
     InitTrigger();
+    UnlockSharedBus();
 }
 
 void DataFIFO::Arm(uint16_t count, uint8_t *buffer) {
@@ -54,6 +68,7 @@ void DataFIFO::Arm(uint16_t count, uint8_t *buffer) {
     armedCount = count;
     dmaComplete = false;
 
+    LockSharedBus();
     FIFO_WATERMARK::Fields watermark;
     watermark.raw = count;
     cfg->Write<FIFO_WATERMARK>(watermark);
@@ -61,6 +76,7 @@ void DataFIFO::Arm(uint16_t count, uint8_t *buffer) {
     GENERAL_CONFIG::Fields generalConfig = cfg->Read<GENERAL_CONFIG>();
     generalConfig.FIFO_MODE = ModeValue();
     cfg->Write<GENERAL_CONFIG>(generalConfig);
+    UnlockSharedBus();
 
     OnArm();
 }
@@ -68,6 +84,7 @@ void DataFIFO::Arm(uint16_t count, uint8_t *buffer) {
 void DataFIFO::Rearm() {
     dmaComplete = false;
 
+    LockSharedBus();
     // Disable then re-enable, per the datasheet's documented rearm sequence. Two separate CFG bus writes: the AD408x
     // needs to see FIFO_MODE actually pass through 0x0 before the second write takes effect.
     GENERAL_CONFIG::Fields generalConfig = cfg->Read<GENERAL_CONFIG>();
@@ -75,11 +92,13 @@ void DataFIFO::Rearm() {
     cfg->Write<GENERAL_CONFIG>(generalConfig);
     generalConfig.FIFO_MODE = ModeValue();
     cfg->Write<GENERAL_CONFIG>(generalConfig);
+    UnlockSharedBus();
 }
 
 void DataFIFO::OnFifoFullISR() {
     CS_Low();
-    HAL_StatusTypeDef status = HAL_SPI_Receive_DMA(hspiData, rxBuffer, (uint16_t) (armedCount * 3U));
+    HAL_StatusTypeDef status = HAL_SPI_Receive_DMA(hspiData, rxBuffer,
+                                                   static_cast<uint16_t>(armedCount * BytesPerSample));
     (void) status; // remove to debug HAL SPI DMA start issues
 }
 

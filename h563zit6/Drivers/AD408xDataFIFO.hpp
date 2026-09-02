@@ -13,6 +13,9 @@
 #include "AD408xRegisters.hpp"
 #include <cstdint>
 
+// Remove the comment to support 20-bit samples (3-byte sample sizes); this is in the hpp file for now.
+#define AD4080
+
 namespace AD408x {
 
     /**
@@ -25,6 +28,11 @@ namespace AD408x {
      *
      * Does not touch the CFG bus directly; register access goes through the Config instance supplied at construction,
      * the same instance the rest of the application uses for CFG bus reads and writes.
+     *
+     * hspi and cfg's own SPI handle may or may not be the same physical peripheral, depending on the board: on the
+     * EVAL-AD4080ARDZ bring-up setup they are (one SPI1, software NSS on SPI_CS versus DATA_CS); on the RSG Rev A board
+     * they are not. This class detects which case it is in by comparing hspi against cfg->GetHSPI() at construction
+     * (see sharedBus below), and only pays for the difference when it matters.
      *
      * Application code is responsible for dispatching two HAL callbacks this class depends on:
      *   - HAL_GPIO_EXTI_Callback(), for the pin matching fifoFullPin, must call OnFifoFullISR().
@@ -54,6 +62,7 @@ namespace AD408x {
             csPin(csPin),
             fifoFullPort(fifoFullPort),
             fifoFullPin(fifoFullPin),
+            sharedBus(hspiData == cfg->GetHSPI()),
             rxBuffer(nullptr),
             armedCount(0),
             dmaComplete(false) {};
@@ -113,6 +122,12 @@ namespace AD408x {
          */
         void OnDmaCompleteISR();
 
+#if defined(AD4080)
+        static constexpr uint8_t BytesPerSample = 3u; // 20-bit resolution
+#else
+        static constexpr uint8_t BytesPerSample = 2u; // 16-bit resolution, pending bench confirmation
+#endif
+
     protected:
         /**
          * @brief Returns the FIFO_MODE value this trigger mode arms with.
@@ -145,12 +160,26 @@ namespace AD408x {
         /// Drives the DATA bus chip select (DCS) high (deasserts, active low).
         void CS_High();
 
+        /**
+         * @brief Enters a critical section around a CFG bus access, only if sharedBus is true.
+         *
+         * @note Uses __disable_irq(), matching the short ISR-safe critical sections already used elsewhere in this
+         * codebase (see usb.c), rather than a FreeRTOS semaphore: the contention this guards against is a task context
+         * CFG bus write versus the FIFO_FULL EXTI ISR, which cannot block waiting on a semaphore. No-op when sharedBus
+         * is false, since two separate peripherals cannot contend for each other.
+         */
+        void LockSharedBus() const;
+
+        /// Leaves the critical section entered by LockSharedBus(). No-op when sharedBus is false.
+        void UnlockSharedBus() const;
+
         Config              *cfg;           ///< Config instance used for CFG bus register access.
         SPI_HandleTypeDef   *hspiData;      ///< HAL SPI handle for the DATA bus.
         GPIO_TypeDef        *csPort;        ///< GPIO port of the DATA bus chip select (DCS) pin.
         uint16_t            csPin;          ///< GPIO pin mask of the DATA bus chip select (DCS) pin.
         GPIO_TypeDef        *fifoFullPort;  ///< GPIO port of the FIFO_FULL input pin.
         uint16_t            fifoFullPin;    ///< GPIO pin mask of the FIFO_FULL input pin.
+        const bool          sharedBus;      ///< True if hspiData and cfg->GetHSPI() are the same peripheral.
         uint8_t             *rxBuffer;      ///< Destination buffer for the current armed capture, set by Arm().
         uint16_t            armedCount;     ///< Number of conversions armed for the current capture, set by Arm().
         volatile bool       dmaComplete;    ///< Set by OnDmaCompleteISR(), cleared by Arm(). Backs DataReady().
