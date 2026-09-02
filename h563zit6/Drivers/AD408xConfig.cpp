@@ -25,11 +25,6 @@ void Config::CS_High() {
     HAL_GPIO_WritePin(csPort, csPin, GPIO_PIN_SET);
 }
 
-void Config::PrepareTransactionGroup() {
-    HAL_SPI_Init(hspi);
-    __HAL_SPI_ENABLE(hspi);
-}
-
 void Config::Init() {
     CS_High(); // CS idles high (active low)
 }
@@ -78,12 +73,10 @@ void Config::WriteRegistersRaw(uint16_t address, const uint8_t *buffer, uint8_t 
 }
 
 bool Config::VerifyChipID() {
-    PrepareTransactionGroup();
-
-    CHIP_TYPE::Fields chipType = ReadRaw<CHIP_TYPE>();
-    PRODUCT_ID_L::Fields productIdL = ReadRaw<PRODUCT_ID_L>();
-    PRODUCT_ID_H::Fields productIdH = ReadRaw<PRODUCT_ID_H>();
-    CHIP_GRADE::Fields chipGrade = ReadRaw<CHIP_GRADE>();
+    CHIP_TYPE::Fields chipType = Read<CHIP_TYPE>();
+    PRODUCT_ID_L::Fields productIdL = Read<PRODUCT_ID_L>();
+    PRODUCT_ID_H::Fields productIdH = Read<PRODUCT_ID_H>();
+    CHIP_GRADE::Fields chipGrade = Read<CHIP_GRADE>();
 
     LOG("CHIP_TYPE=0x%02X (expect 0x07)\r\n", chipType.raw);
     LOG("PRODUCT_ID=0x%04X\r\n", static_cast<uint16_t>((productIdH.raw << 8) | productIdL.raw));
@@ -93,12 +86,10 @@ bool Config::VerifyChipID() {
 }
 
 bool Config::ScratchPadLoopback(uint8_t testValue) {
-    PrepareTransactionGroup();
-
     SCRATCH_PAD::Fields value;
     value.SCRATCH_VALUE = testValue;
-    WriteRaw<SCRATCH_PAD>(value);
-    SCRATCH_PAD::Fields readBack = ReadRaw<SCRATCH_PAD>();
+    Write<SCRATCH_PAD>(value);
+    SCRATCH_PAD::Fields readBack = Read<SCRATCH_PAD>();
 
     LOG("SCRATCH_PAD wrote 0x%02X, read back 0x%02X\r\n", testValue, readBack.raw);
 
@@ -114,39 +105,37 @@ void Config::LogMismatch(const char *name, uint16_t actual, uint16_t expected, b
 }
 
 int Config::TestReadAll() {
-    PrepareTransactionGroup();
-
     int invalid = 0;
-    if (!CheckDefaultRaw<INTERFACE_CONFIG_A>()) { ++invalid; }
-    if (!CheckDefaultRaw<INTERFACE_CONFIG_B>()) { ++invalid; }
-    if (!CheckDefaultRaw<DEVICE_CONFIG>()) { ++invalid; }
-    if (!CheckDefaultRaw<CHIP_TYPE>()) { ++invalid; }
-    if (!CheckDefaultRaw<PRODUCT_ID_L>()) { ++invalid; }
-    if (!CheckDefaultRaw<PRODUCT_ID_H>()) { ++invalid; }
-    if (!CheckDefaultRaw<CHIP_GRADE>()) { ++invalid; }
-    if (!CheckDefaultRaw<SCRATCH_PAD>()) { ++invalid; }
-    if (!CheckDefaultRaw<SPI_REVISION>()) { ++invalid; }
-    if (!CheckDefaultRaw<VENDOR_L>()) { ++invalid; }
-    if (!CheckDefaultRaw<VENDOR_H>()) { ++invalid; }
-    if (!CheckDefaultRaw<STREAM_MODE>()) { ++invalid; }
-    if (!CheckDefaultRaw<TRANSFER_CONFIG>()) { ++invalid; }
-    if (!CheckDefaultRaw<INTERFACE_CONFIG_C>()) { ++invalid; }
-    if (!CheckDefaultRaw<INTERFACE_STATUS_A>()) { ++invalid; }
-    if (!CheckDefaultRaw<DEVICE_STATUS>()) { ++invalid; }
-    if (!CheckDefaultRaw<ADC_DATA_INTF_CONFIG_A>()) { ++invalid; }
-    if (!CheckDefaultRaw<ADC_DATA_INTF_CONFIG_B>()) { ++invalid; }
-    if (!CheckDefaultRaw<ADC_DATA_INTF_CONFIG_C>()) { ++invalid; }
-    if (!CheckDefaultRaw<PWR_CTRL>()) { ++invalid; }
-    if (!CheckDefaultRaw<GPIO_CONFIG_A>()) { ++invalid; }
-    if (!CheckDefaultRaw<GPIO_CONFIG_B>()) { ++invalid; }
-    if (!CheckDefaultRaw<GPIO_CONFIG_C>()) { ++invalid; }
-    if (!CheckDefaultRaw<GENERAL_CONFIG>()) { ++invalid; }
-    if (!CheckDefaultRaw<FIFO_WATERMARK>()) { ++invalid; }
-    if (!CheckDefaultRaw<EVENT_HYSTERESIS>()) { ++invalid; }
-    if (!CheckDefaultRaw<EVENT_DETECTION_HI>()) { ++invalid; }
-    if (!CheckDefaultRaw<EVENT_DETECTION_LO>()) { ++invalid; }
-    if (!CheckDefaultRaw<OFFSET>()) { ++invalid; }
-    if (!CheckDefaultRaw<GAIN>()) { ++invalid; }
-    if (!CheckDefaultRaw<FILTER_CONFIG>()) { ++invalid; }
+    if (!CheckDefault<INTERFACE_CONFIG_A>()) { ++invalid; }
+    if (!CheckDefault<INTERFACE_CONFIG_B>()) { ++invalid; }
+    if (!CheckDefault<DEVICE_CONFIG>()) { ++invalid; }
+    if (!CheckDefault<CHIP_TYPE>()) { ++invalid; }
+    if (!CheckDefault<PRODUCT_ID_L>()) { ++invalid; }
+    if (!CheckDefault<PRODUCT_ID_H>()) { ++invalid; }
+    if (!CheckDefault<CHIP_GRADE>()) { ++invalid; }
+    if (!CheckDefault<SCRATCH_PAD>()) { ++invalid; }
+    if (!CheckDefault<SPI_REVISION>()) { ++invalid; }
+    if (!CheckDefault<VENDOR_L>()) { ++invalid; }
+    if (!CheckDefault<VENDOR_H>()) { ++invalid; }
+    if (!CheckDefault<STREAM_MODE>()) { ++invalid; }
+    if (!CheckDefault<TRANSFER_CONFIG>()) { ++invalid; }
+    if (!CheckDefault<INTERFACE_CONFIG_C>()) { ++invalid; }
+    if (!CheckDefault<INTERFACE_STATUS_A>()) { ++invalid; }
+    if (!CheckDefault<DEVICE_STATUS>()) { ++invalid; }
+    if (!CheckDefault<ADC_DATA_INTF_CONFIG_A>()) { ++invalid; }
+    if (!CheckDefault<ADC_DATA_INTF_CONFIG_B>()) { ++invalid; }
+    if (!CheckDefault<ADC_DATA_INTF_CONFIG_C>()) { ++invalid; }
+    if (!CheckDefault<PWR_CTRL>()) { ++invalid; }
+    if (!CheckDefault<GPIO_CONFIG_A>()) { ++invalid; }
+    if (!CheckDefault<GPIO_CONFIG_B>()) { ++invalid; }
+    if (!CheckDefault<GPIO_CONFIG_C>()) { ++invalid; }
+    if (!CheckDefault<GENERAL_CONFIG>()) { ++invalid; }
+    if (!CheckDefault<FIFO_WATERMARK>()) { ++invalid; }
+    if (!CheckDefault<EVENT_HYSTERESIS>()) { ++invalid; }
+    if (!CheckDefault<EVENT_DETECTION_HI>()) { ++invalid; }
+    if (!CheckDefault<EVENT_DETECTION_LO>()) { ++invalid; }
+    if (!CheckDefault<OFFSET>()) { ++invalid; }
+    if (!CheckDefault<GAIN>()) { ++invalid; }
+    if (!CheckDefault<FILTER_CONFIG>()) { ++invalid; }
     return invalid;
 }
