@@ -14,6 +14,7 @@
 #include "spi.h"
 #include "DiagnosticsQ.h"
 #include "MainAppQ.h"
+#include "ADCCmdDefines.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -82,6 +83,22 @@ static void userButtonReleased(void) {
     DiagQ_Log(DiagSource_MainApp, "[USER] released");
 }
 
+static void processADCCmd(ADCCmd_t adcCmd) {
+    switch (adcCmd.subcmd) {
+    case ADCCmdSubcmd_scratchpad:
+        adcConfig.ScratchPadLoopback(adcCmd.values.scratchpad_val);
+        break;
+    case ADCCmdSubcmd_checkdefaults:
+        adcConfig.TestReadAll();
+        break;
+    case ADCCmdSubcmd_info:
+        adcConfig.VerifyChipID();
+        break;
+    default:
+        DiagQ_Log(DiagSource_MainApp, "\"adc\" subcmd value %d not recognized", adcCmd.subcmd);
+    }
+}
+
 static void processMessage(MainAppMsg_t const * message) {
     if (!message) {
         return;
@@ -97,6 +114,9 @@ static void processMessage(MainAppMsg_t const * message) {
         else if (message->content.buttonTransition == ButtonTransition_Pressed) {
             userButtonPressed();
         }
+        break;
+    case MainAppEvent_ADCCmd:
+        processADCCmd(message->content.adcCmd);
         break;
     default:
         // do nothing

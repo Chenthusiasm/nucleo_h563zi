@@ -11,8 +11,11 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------------------------- */
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "ADCCmdDefines.h"
 
 
 /* External typedef ------------------------------------------------------------------------------*/
@@ -20,6 +23,7 @@ extern "C" {
 typedef enum {
     MainAppEvent_Sleep,
     MainAppEvent_UserButtonChange,
+    MainAppEvent_ADCCmd,
 } MainAppEvent_t;
 
 typedef enum {
@@ -30,6 +34,7 @@ typedef enum {
 typedef union {
     uint32_t            sleepTime_ms;
     ButtonTransition_t  buttonTransition;
+    ADCCmd_t            adcCmd;
 } MainAppMsgContent_t;
 
 typedef struct {
@@ -49,9 +54,12 @@ typedef struct {
 
 /* External functions ----------------------------------------------------------------------------*/
 
-void MainAppQ_Sleep_ms(uint32_t duration_ms);
-void MainAppQ_UserButtonPressed(void);
-void MainAppQ_UserButtonReleased(void);
+bool MainAppQ_Sleep_ms(uint32_t duration_ms);
+bool MainAppQ_UserButtonPressed(void);
+bool MainAppQ_UserButtonReleased(void);
+bool MainAppQ_ADCCmdScratchPad(uint8_t value);
+bool MainAppQ_ADCCmdCheckDefaults(void);
+bool MainAppQ_ADCCmdInfo(void);
 
 
 #ifdef __cplusplus

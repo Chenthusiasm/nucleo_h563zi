@@ -9,6 +9,7 @@
 #include "sys_command_line.h"
 #include "usart.h"
 #include "usbd_cdc_if.h"
+#include "ADCCmd.h"
 
 
 /* Internal typedef ------------------------------------------------------------------------------*/
@@ -83,4 +84,7 @@ void DiagnosticsTask_Init(void) {
     USBD_StatusTypeDef status = USB_CDC_Init();
     (void) status;
     CLI_INIT();
+    
+    // initialize the CLI commands
+    ADCCmd_Init();
 }

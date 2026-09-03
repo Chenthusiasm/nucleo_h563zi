@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "ADCCmdDefines.h"
 #include "app_freertos.h"
 #include "RTOS.h"
 
@@ -42,25 +43,57 @@ static bool enqueueEvent(MainAppEvent_t event, MainAppMsgContent_t * content) {
 
 /* External functions ----------------------------------------------------------------------------*/
 
-void MainAppQ_Sleep_ms(uint32_t duration_ms) {
+bool MainAppQ_Sleep_ms(uint32_t duration_ms) {
     MainAppMsgContent_t content = {
         .sleepTime_ms = duration_ms,
     };
-    enqueueEvent(MainAppEvent_Sleep, &content);
+    return enqueueEvent(MainAppEvent_Sleep, &content);
 }
 
 
-void MainAppQ_UserButtonPressed(void) {
+bool MainAppQ_UserButtonPressed(void) {
     MainAppMsgContent_t content = {
         .buttonTransition = ButtonTransition_Pressed,
     };
-    enqueueEvent(MainAppEvent_UserButtonChange, &content);
+    return enqueueEvent(MainAppEvent_UserButtonChange, &content);
 }
 
 
-void MainAppQ_UserButtonReleased(void) {
+bool MainAppQ_UserButtonReleased(void) {
     MainAppMsgContent_t content = {
         .buttonTransition = ButtonTransition_Released,
     };
-    enqueueEvent(MainAppEvent_UserButtonChange, &content);
+    return enqueueEvent(MainAppEvent_UserButtonChange, &content);
+}
+
+bool MainAppQ_ADCCmdScratchPad(uint8_t value) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_scratchpad,
+            .values = {
+                .scratchpad_val = value
+            }
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdCheckDefaults(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_checkdefaults,
+            //values doesn't matter
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdInfo(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_info,
+            //values doesn't matter
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
 }
