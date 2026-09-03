@@ -89,7 +89,10 @@ static void processADCCmd(ADCCmd_t adcCmd) {
         adcConfig.ScratchPadLoopback(adcCmd.values.scratchpad_val);
         break;
     case ADCCmdSubcmd_checkdefaults:
-        adcConfig.TestReadAll();
+        {
+            int invalid = adcConfig.TestReadAll();
+            DiagQ_Log(DiagSource_MainApp, "AD408x::Config::TestReadAll()= %d", invalid);
+        }
         break;
     case ADCCmdSubcmd_info:
         adcConfig.VerifyChipID();

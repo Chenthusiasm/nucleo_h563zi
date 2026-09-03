@@ -55,7 +55,7 @@ static char const CmdHelp[] =
     "\tadc help                - print this usage text" ENDL
     "\tadc scratchpad <value>  - write <value> (decimal or 0x.. hex) to SCRATCH_PAD and read it" ENDL
     "\t                          back to confirm it matches" ENDL
-    "\tadc checkdefault        - read all config registers and check them against reset defaults" ENDL
+    "\tadc checkdefaults       - read all config registers and check them against reset defaults" ENDL
     "\tadc info                - read and print CHIP_TYPE/PRODUCT_ID/CHIP_GRADE" ENDL
     "Note: subcommands are queued to MainAppTask; the actual pass/fail result is printed" ENDL
     "asynchronously in the log once MainAppTask executes the request against the ADC.";
@@ -66,7 +66,16 @@ static char const CmdHelp[] =
 
 /* Internal functions ----------------------------------------------------------------------------*/
 
-static void printUsage(char const* subcmd, char const* argsString = nullptr) {
+static void printCmdUsage() {
+    printf("Usage: " CMD_NAME " <"
+        SUBCMD_HELP "|"
+        SUBCMD_SCRATCHPAD "|"
+        SUBCMD_CHECKDEFAULTS "|"
+        SUBCMD_INFO
+        "> [args]" ENDL);
+}
+
+static void printSubcmdUsage(char const* subcmd, char const* argsString = nullptr) {
     if (!argsString) {
         printf("Usage: " CMD_NAME " %s" ENDL, subcmd);
     } else {
@@ -74,16 +83,20 @@ static void printUsage(char const* subcmd, char const* argsString = nullptr) {
     }
 }
 
+static void printEnqueueFailure(char const* subcmd) {
+    printf("Could not queue %s request (MainAppTask busy or queue full)." ENDL, subcmd);
+}
+
 static uint8_t handleSubcmd_help(int argc, char *argv[]) {
     (void) argc;
     (void) argv;
-    printf("%s\n", CmdHelp);
+    printf("%s" ENDL, CmdHelp);
     return EXIT_SUCCESS;
 }
 
 static uint8_t handleSubcmd_scratchpad(int argc, char *argv[]) {
     if (argc != 3) {
-        printUsage(SUBCMD_SCRATCHPAD, "<value>");
+        printSubcmdUsage(SUBCMD_SCRATCHPAD, "<value>");
         return EXIT_FAILURE;
     }
 
@@ -94,7 +107,7 @@ static uint8_t handleSubcmd_scratchpad(int argc, char *argv[]) {
     }
 
     if (!MainAppQ_ADCCmdScratchPad(value)) {
-        printf("Could not queue " SUBCMD_SCRATCHPAD " request (MainAppTask busy or queue full).\n");
+        printEnqueueFailure(SUBCMD_SCRATCHPAD);
         return EXIT_FAILURE;
     }
 
@@ -104,27 +117,27 @@ static uint8_t handleSubcmd_scratchpad(int argc, char *argv[]) {
 
 static uint8_t handleSubcmd_checkdefaults(int argc, char *argv[]) {
     if (argc != 2) {
-        printUsage(SUBCMD_CHECKDEFAULTS);
+        printSubcmdUsage(SUBCMD_CHECKDEFAULTS);
         return EXIT_FAILURE;
     }
 
     if (!MainAppQ_ADCCmdCheckDefaults()) {
-        printf("Could not queue checkdefault request (MainAppTask busy or queue full).\n");
+        printEnqueueFailure(SUBCMD_CHECKDEFAULTS);
         return EXIT_FAILURE;
     }
 
-    printf("Queued register checkdefault; watch the log for any mismatches.\n");
+    printf("Queued all config register check against defaults; watch the log for any mismatches." ENDL);
     return EXIT_SUCCESS;
 }
 
 static uint8_t handleSubcmd_info(int argc, char *argv[]) {
     if (argc != 2) {
-        printUsage(SUBCMD_INFO);
+        printSubcmdUsage(SUBCMD_INFO);
         return EXIT_FAILURE;
     }
 
     if (!MainAppQ_ADCCmdInfo()) {
-        printf("Could not queue info request (MainAppTask busy or queue full)." ENDL);
+        printEnqueueFailure(SUBCMD_INFO);
         return EXIT_FAILURE;
     }
 
@@ -134,21 +147,21 @@ static uint8_t handleSubcmd_info(int argc, char *argv[]) {
 
 static uint8_t handleCmd(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Usage: " CMD_NAME " <help|scratchpad|checkdefault|info> [args]" ENDL);
+        printCmdUsage();
         return EXIT_FAILURE;
     }
     char const* subcmd = argv[1];
-    if (strcmp(subcmd, "help") == 0) {
+    if (strcmp(subcmd, SUBCMD_HELP) == 0) {
         return handleSubcmd_help(argc, argv);
-    } else if (strcmp(subcmd, "scratchpad") == 0) {
+    } else if (strcmp(subcmd, SUBCMD_SCRATCHPAD) == 0) {
         return handleSubcmd_scratchpad(argc, argv);
-    } else if (strcmp(subcmd, "checkdefault") == 0) {
+    } else if (strcmp(subcmd, SUBCMD_CHECKDEFAULTS) == 0) {
         return handleSubcmd_checkdefaults(argc, argv);
-    } else if (strcmp(subcmd, "info") == 0) {
+    } else if (strcmp(subcmd, SUBCMD_INFO) == 0) {
         return handleSubcmd_info(argc, argv);
     }
 
-    printf("Unknown \"" CMD_NAME "\" subcommand \"%s\". Try \"" CMD_NAME " help\"." ENDL, subcmd);
+    printf("Unknown \"" CMD_NAME "\" subcommand \"%s\". Try \"" CMD_NAME " " SUBCMD_HELP "\"." ENDL, subcmd);
     return EXIT_FAILURE;
 }
 
