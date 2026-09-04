@@ -35,8 +35,8 @@ namespace AD408x {
      * (see sharedBus below), and only pays for the difference when it matters.
      *
      * Application code is responsible for dispatching two HAL callbacks this class depends on:
-     *   - HAL_GPIO_EXTI_Callback(), for the pin matching fifoFullPin, must call OnFifoFullISR().
-     *   - HAL_SPI_RxCpltCallback(), for the hspi matching hspiData, must call OnDmaCompleteISR().
+     *   - HAL_GPIO_EXTI_Callback(), for the pin matching fifoFullPin, must call OnFIFOFullISR().
+     *   - HAL_SPI_RxCpltCallback(), for the hspi matching hspiData, must call OnDMACompleteISR().
      */
     class DataFIFO {
     public:
@@ -112,7 +112,7 @@ namespace AD408x {
          * Asserts the DATA bus chip select and starts the DMA burst read of armedCount samples into the buffer that was
          * supplied to Arm().
          */
-        void OnFifoFullISR();
+        void OnFIFOFullISR();
 
         /**
          * @brief Call from the application's HAL_SPI_RxCpltCallback() dispatch for hspiData.
@@ -120,7 +120,7 @@ namespace AD408x {
          * De-asserts the DATA bus chip select and marks the capture as ready. After this call, DataReady() returns true
          * until the next Arm().
          */
-        void OnDmaCompleteISR();
+        void OnDMACompleteISR();
 
 #if defined(AD4080)
         static constexpr uint8_t BytesPerSample = 3u; // 20-bit resolution
@@ -182,7 +182,7 @@ namespace AD408x {
         const bool          sharedBus;      ///< True if hspiData and cfg->GetHSPI() are the same peripheral.
         uint8_t             *rxBuffer;      ///< Destination buffer for the current armed capture, set by Arm().
         uint16_t            armedCount;     ///< Number of conversions armed for the current capture, set by Arm().
-        volatile bool       dmaComplete;    ///< Set by OnDmaCompleteISR(), cleared by Arm(). Backs DataReady().
+        volatile bool       dmaComplete;    ///< Set by OnDMACompleteISR(), cleared by Arm(). Backs DataReady().
     };
     
 }

@@ -95,14 +95,14 @@ void DataFIFO::Rearm() {
     UnlockSharedBus();
 }
 
-void DataFIFO::OnFifoFullISR() {
+void DataFIFO::OnFIFOFullISR() {
     CS_Low();
     HAL_StatusTypeDef status = HAL_SPI_Receive_DMA(hspiData, rxBuffer,
                                                    static_cast<uint16_t>(armedCount * BytesPerSample));
     (void) status; // remove to debug HAL SPI DMA start issues
 }
 
-void DataFIFO::OnDmaCompleteISR() {
+void DataFIFO::OnDMACompleteISR() {
     CS_High();
     dmaComplete = true;
 }
