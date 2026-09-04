@@ -9,11 +9,6 @@
 #include "AD408xDataFIFO.hpp"
 
 #include "AD408xRegisters.hpp"
-#include "DiagnosticsQ.h"
-
-// Swap this single line to redirect all LOG() calls in this file:
-#define LOG(...)                        DiagQ_printf(__VA_ARGS__)
-//#define LOG(...)                        DiagQ_Log(DiagSource_AD408xDataFIFO, ##__VA_ARGS__)
 
 using namespace AD408x;
 
@@ -81,12 +76,15 @@ void DataFIFO::Arm(uint16_t count, uint8_t *buffer) {
     OnArm();
 }
 
-void DataFIFO::Rearm() {
+void DataFIFO::Rearm(uint8_t *buffer) {
+    rxBuffer = buffer;
     dmaComplete = false;
 
     LockSharedBus();
     // Disable then re-enable, per the datasheet's documented rearm sequence. Two separate CFG bus writes: the AD408x
-    // needs to see FIFO_MODE actually pass through 0x0 before the second write takes effect.
+    // needs to see FIFO_MODE actually pass through 0x0 before the second write takes effect. FIFO_WATERMARK is not
+    // rewritten here, armedCount (and therefore the DMA burst length in OnFIFOFullISR()) is unchanged from the last
+    // Arm() call, only the destination buffer moves.
     GENERAL_CONFIG::Fields generalConfig = cfg->Read<GENERAL_CONFIG>();
     generalConfig.FIFO_MODE = 0x0;
     cfg->Write<GENERAL_CONFIG>(generalConfig);

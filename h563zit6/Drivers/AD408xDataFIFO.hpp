@@ -89,14 +89,20 @@ namespace AD408x {
         void Arm(uint16_t count, uint8_t *buffer);
 
         /**
-         * @brief Disables then re-enables the FIFO to rearm it for another capture at the same trigger mode.
+         * @brief Disables then re-enables the FIFO to rearm it for another capture at the same trigger mode, into a new
+         *        destination buffer.
          *
          * Shared by every trigger mode: FIFO_MODE = 0x0 (disabled), followed by FIFO_MODE = ModeValue() again. Per the
-         * datasheet this is the same sequence documented for immediate trigger mode rearming. Whether it is safe to
-         * call while a previous burst is still unread is an open question flagged in the project's design doc, and
-         * should be bench verified before relying on it mid sweep.
+         * datasheet this is the same sequence documented for immediate trigger mode rearming. Reuses the watermark
+         * count from the last Arm() call (FIFO_WATERMARK is not rewritten); only the destination buffer changes.
+         * Whether it is safe to call while a previous burst is still unread is an open question flagged in the
+         * project's design doc, and should be bench verified before relying on it mid sweep.
+         *
+         * @param[in] buffer Destination for the DMA burst read once FIFO_FULL fires next. Must remain valid until
+         *                   DataReady() returns true, and must be at least 3 * armedCount bytes (the count from the
+         *                   last Arm() call).
          */
-        void Rearm();
+        void Rearm(uint8_t *buffer);
 
         /**
          * @brief Reports whether the last armed capture has finished.

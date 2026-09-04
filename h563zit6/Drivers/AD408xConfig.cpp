@@ -10,10 +10,11 @@
 
 #include "AD408xRegisters.hpp"
 #include "DiagnosticsQ.h"
+#include "sys_command_line.h"
 
-// Swap this single line to redirect all LOG() calls in this file:
-#define LOG(...)                        DiagQ_printf(__VA_ARGS__)
-//#define LOG(...)                        DiagQ_Log(DiagSource_AD408xConfig, ##__VA_ARGS__)
+// Swap this single line to redirect all PRINTF() calls in this file:
+#define PRINTF(...)                     DiagQ_printf(__VA_ARGS__)
+//#define PRINTF(...)                     DiagQ_Log(DiagSource_AD408xConfig, ##__VA_ARGS__)
 
 using namespace AD408x;
 
@@ -78,9 +79,9 @@ bool Config::VerifyChipID() {
     PRODUCT_ID_H::Fields productIdH = Read<PRODUCT_ID_H>();
     CHIP_GRADE::Fields chipGrade = Read<CHIP_GRADE>();
 
-    LOG("CHIP_TYPE=0x%02X (expect 0x07)\r\n", chipType.raw);
-    LOG("PRODUCT_ID=0x%04X\r\n", static_cast<uint16_t>((productIdH.raw << 8) | productIdL.raw));
-    LOG("CHIP_GRADE=0x%02X (device revision expect 0x2)\r\n", chipGrade.raw);
+    PRINTF("CHIP_TYPE=0x%02X (expect 0x07)" ENDL, chipType.raw);
+    PRINTF("PRODUCT_ID=0x%04X" ENDL, static_cast<uint16_t>((productIdH.raw << 8) | productIdL.raw));
+    PRINTF("CHIP_GRADE=0x%02X (device revision expect 0x2)" ENDL, chipGrade.raw);
 
     return (chipType.CHIP_TYPE == 0x7U) && (chipGrade.DEVICE_REVISION == 0x2U);
 }
@@ -91,16 +92,16 @@ bool Config::ScratchPadLoopback(uint8_t testValue) {
     Write<SCRATCH_PAD>(value);
     SCRATCH_PAD::Fields readBack = Read<SCRATCH_PAD>();
 
-    LOG("SCRATCH_PAD wrote 0x%02X, read back 0x%02X\r\n", testValue, readBack.raw);
+    PRINTF("SCRATCH_PAD wrote 0x%02X, read back 0x%02X" ENDL, testValue, readBack.raw);
 
     return readBack.raw == testValue;
 }
 
 void Config::LogMismatch(const char *name, uint16_t actual, uint16_t expected, bool isTwoByte) {
     if (isTwoByte) {
-        LOG("%s: %04x != %04x\r\n", name, actual, expected);
+        PRINTF("%s: %04x != %04x" ENDL, name, actual, expected);
     } else {
-        LOG("%s: %02x != %02x\r\n", name, actual, expected);
+        PRINTF("%s: %02x != %02x" ENDL, name, actual, expected);
     }
 }
 

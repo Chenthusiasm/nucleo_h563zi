@@ -9,10 +9,10 @@
  * rejecting a request if the bus is busy.
  *
  * Because the ADC access itself happens asynchronously in MainAppTask, and AD408x::Config's
- * ScratchPadLoopback()/VerifyChipID()/TestReadAll() already LOG() their results internally (which
- * routes through DiagQ_printf/DiagQ_Log), this command's synchronous EXIT_SUCCESS/EXIT_FAILURE only
- * reflects whether the request was successfully queued -- not the outcome of the ADC access itself.
- * The actual result shows up a moment later in the diagnostics log.
+ * ScratchPadLoopback()/VerifyChipID()/TestReadAll() already PRINTF() their results internally
+ * (which routes through DiagQ_printf/DiagQ_Log), this command's synchronous EXIT_SUCCESS/
+ * EXIT_FAILURE only reflects whether the request was successfully queued -- not the outcome of the
+ * ADC access itself. The actual result shows up a moment later in the diagnostics log.
  *
  * The CLI handling of the ADC commands happens on the DiagnosticsTask, which periodically calls
  * CLI_RUN().
