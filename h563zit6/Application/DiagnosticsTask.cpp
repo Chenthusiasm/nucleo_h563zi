@@ -62,13 +62,26 @@ static void printMessage(DiagMsg_t const* message) {
 void DiagnosticsTask_Start(void *argument) {
     for (;;) {
         uint32_t const batchStart = osKernelGetTickCount();
+        bool printedBatch = false;
         while ((osKernelGetTickCount() - batchStart) < DEQUEUE_BATCH_BUDGET_TICKS) {
             CLI_RUN();
             DiagMsg_t message;
             if (osMessageQueueGet(DiagnosticsQHandle, &message, nullptr, 0) != osOK) {
                 break; // queue's empty, don't continue spinning
             }
+            if (!printedBatch) {
+                // the terminal is currently sitting at a bare prompt left over from the last command or the last batch
+                // of asynchronous log output; move to a new line before printing so log text doesn't run onto the same
+                // line as the prompt
+                NL1();
+            }
             printMessage(&message);
+            printedBatch = true;
+        }
+        if (printedBatch) {
+            // redraw the prompt so it doesn't get left behind under asynchronous log output, similar to how the Linux
+            // terminal reprints the prompt once background output finishes
+            PRINT_CLI_NAME();
         }
         osDelay(TASK_POLL_TICKS);
     }

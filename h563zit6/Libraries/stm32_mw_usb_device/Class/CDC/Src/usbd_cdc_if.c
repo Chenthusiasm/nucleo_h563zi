@@ -339,6 +339,24 @@ USBD_StatusTypeDef USB_CDC_Transmit(uint8_t const* const buffer, uint16_t length
 
 
 /**
+ * @brief   Checks whether a USB CDC transmission started by USB_CDC_Transmit() is still in
+ *          progress.
+ * @note    Because USB_CDC_Transmit() hands the driver a raw pointer into the caller's buffer
+ *          rather than copying the data, a caller that intends to reuse or overwrite that buffer
+ *          must poll this function until it returns false before doing so.
+ * @return  true if a transmission is still in progress, false otherwise (including if there is no
+ *               active USB connection).
+ */
+bool USB_CDC_IsTransmitBusy(void) {
+    USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)self.usbdHandle.pClassData;
+    if (hcdc == NULL) {
+        return false;
+    }
+    return hcdc->TxState != 0;
+}
+
+
+/**
  * @brief   Register a receive callback to handle data received over the USB VCP.
  * @note    Be sure the receive callback is a non-blocking function.
  * @param[in]   callback    The receive callback function to register.
