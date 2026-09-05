@@ -202,7 +202,7 @@ static uint8_t handleFifo_immediate(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    printf("Queued FIFO mode switch to immediate; watch the log for the result." ENDL);
+    printf("Queued FIFO trigger mode switch to immediate; watch the log for the result." ENDL);
     return EXIT_SUCCESS;
 }
 
@@ -217,7 +217,7 @@ static uint8_t handleFifo_event(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    printf("Queued FIFO mode switch to event; watch the log for the result." ENDL);
+    printf("Queued FIFO trigger mode switch to event; watch the log for the result." ENDL);
     return EXIT_SUCCESS;
 }
 
