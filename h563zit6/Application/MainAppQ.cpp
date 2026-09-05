@@ -66,12 +66,12 @@ bool MainAppQ_UserButtonReleased(void) {
     return enqueueEvent(MainAppEvent_UserButtonChange, &content);
 }
 
-bool MainAppQ_ADCCmdScratchPad(uint8_t value) {
+bool MainAppQ_ADCCmdScratchPad(uint8_t scratchpadValue) {
     MainAppMsgContent_t content = {
         .adcCmd = {
             .subcmd = ADCCmdSubcmd_scratchpad,
             .values = {
-                .scratchpad_val = value
+                .scratchpadValue = scratchpadValue,
             }
         }
     };
@@ -93,6 +93,119 @@ bool MainAppQ_ADCCmdInfo(void) {
         .adcCmd = {
             .subcmd = ADCCmdSubcmd_info,
             //values doesn't matter
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdFIFOInfo(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_fifo,
+            .values = {
+                .fifo = {
+                    .parameter = ADCCmdFIFOParameter_info,
+                }
+            }
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdFIFOImmediate(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_fifo,
+            .values = {
+                .fifo = {
+                    .parameter = ADCCmdFIFOParameter_immediate,
+                }
+            }
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdFIFOEvent(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_fifo,
+            .values = {
+                .fifo = {
+                    .parameter = ADCCmdFIFOParameter_event,
+                }
+            }
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdFIFOAutoRead(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_fifo,
+            .values = {
+                .fifo = {
+                    .parameter = ADCCmdFIFOParameter_autoread,
+                }
+            }
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdFIFOManualRead(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_fifo,
+            .values = {
+                .fifo = {
+                    .parameter = ADCCmdFIFOParameter_manualread,
+                }
+            }
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdFIFOArm(uint16_t watermark) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_fifo,
+            .values = {
+                .fifo = {
+                    .parameter = ADCCmdFIFOParameter_arm,
+                    .watermark = watermark,
+                }
+            }
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdFIFORearm(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_fifo,
+            .values = {
+                .fifo = {
+                    .parameter = ADCCmdFIFOParameter_rearm,
+                }
+            }
+        }
+    };
+    return enqueueEvent(MainAppEvent_ADCCmd, &content);
+}
+
+bool MainAppQ_ADCCmdFIFORead(void) {
+    MainAppMsgContent_t content = {
+        .adcCmd = {
+            .subcmd = ADCCmdSubcmd_fifo,
+            .values = {
+                .fifo = {
+                    .parameter = ADCCmdFIFOParameter_read,
+                }
+            }
         }
     };
     return enqueueEvent(MainAppEvent_ADCCmd, &content);

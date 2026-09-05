@@ -20,10 +20,34 @@ typedef enum {
     ADCCmdSubcmd_scratchpad,
     ADCCmdSubcmd_checkdefaults,
     ADCCmdSubcmd_info,
+    ADCCmdSubcmd_fifo,
+
+    // add new subcommands before here
+    NUMBER_OF_ADCCmdSubcmd,
 } ADCCmdSubcmd_t;
 
+typedef enum {
+    ADCCmdFIFOParameter_info,
+    ADCCmdFIFOParameter_immediate,
+    ADCCmdFIFOParameter_event,
+    ADCCmdFIFOParameter_autoread,
+    ADCCmdFIFOParameter_manualread,
+    ADCCmdFIFOParameter_arm,
+    ADCCmdFIFOParameter_rearm,
+    ADCCmdFIFOParameter_read,
+
+    // add new parameters before here
+    NUMBER_OF_ADCCmdFIFOParameter,
+} ADCCmdFIFOParameter_t;
+
+typedef struct {
+    ADCCmdFIFOParameter_t parameter;
+    uint16_t              watermark; // only meaningful when parameter == ADCCmdFIFOParameter_arm
+} ADCCmdFIFOValues_t;
+
 typedef union {
-    uint8_t scratchpad_val;
+    uint8_t            scratchpadValue; // subcmd == ADCCmdSubcmd_info
+    ADCCmdFIFOValues_t fifo;            // subcmd == ADCCmdSubcmd_fifo
 } ADCCmdValues_t;
 
 typedef struct {
@@ -33,6 +57,8 @@ typedef struct {
 
 /* External define -------------------------------------------------------------------------------*/
 
+extern char const* ADCCmdSubcmdNames[NUMBER_OF_ADCCmdSubcmd];
+extern char const* ADCCmdFIFOParameterNames[NUMBER_OF_ADCCmdFIFOParameter];
 
 /* External macro --------------------------------------------------------------------------------*/
 

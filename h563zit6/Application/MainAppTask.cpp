@@ -83,10 +83,54 @@ static void userButtonReleased(void) {
     DiagQ_Log(DiagSource_MainApp, "[USER] released");
 }
 
-static void processADCCmd(ADCCmd_t adcCmd) {
+static void logADCCmd(ADCCmd_t const & adcCmd) {
+    if (adcCmd.subcmd >= NUMBER_OF_ADCCmdSubcmd) {
+        DiagQ_Log(DiagSource_MainApp, "\"adc\" subcommand value %d not recognized",
+            static_cast<int>(adcCmd.subcmd));
+        return;
+    }
+    if (adcCmd.subcmd == ADCCmdSubcmd_fifo) {
+        if (adcCmd.values.fifo.parameter >= NUMBER_OF_ADCCmdFIFOParameter) {
+            DiagQ_Log(DiagSource_MainApp, "\"adc fifo\" parameter value %d not recognized",
+                static_cast<int>(adcCmd.values.fifo.parameter));
+            return;
+        }
+        DiagQ_Log(DiagSource_MainApp, "processing \"adc %s %s\" command request",
+            ADCCmdSubcmdNames[adcCmd.subcmd], ADCCmdFIFOParameterNames[adcCmd.values.fifo.parameter]);
+        return;
+    }
+    DiagQ_Log(DiagSource_MainApp, "processing \"adc %s\" command request",
+            ADCCmdSubcmdNames[adcCmd.subcmd]);
+}
+
+static void processADCFIFOCmd(ADCCmdFIFOValues_t const & fifoValues) {
+    switch (fifoValues.parameter) {
+    case ADCCmdFIFOParameter_info:
+        break;
+    case ADCCmdFIFOParameter_immediate:
+        break;
+    case ADCCmdFIFOParameter_event:
+        break;
+    case ADCCmdFIFOParameter_autoread:
+        break;
+    case ADCCmdFIFOParameter_manualread:
+        break;
+    case ADCCmdFIFOParameter_arm:
+        break;
+    case ADCCmdFIFOParameter_rearm:
+        break;
+    case ADCCmdFIFOParameter_read:
+        break;
+    default:
+        ; // do nothing; logADCCmd() handles the error message;
+    }
+}
+
+static void processADCCmd(ADCCmd_t const & adcCmd) {
+    logADCCmd(adcCmd);
     switch (adcCmd.subcmd) {
     case ADCCmdSubcmd_scratchpad:
-        adcConfig.ScratchPadLoopback(adcCmd.values.scratchpad_val);
+        adcConfig.ScratchPadLoopback(adcCmd.values.scratchpadValue);
         break;
     case ADCCmdSubcmd_checkdefaults:
         {
@@ -97,8 +141,11 @@ static void processADCCmd(ADCCmd_t adcCmd) {
     case ADCCmdSubcmd_info:
         adcConfig.VerifyChipID();
         break;
+    case ADCCmdSubcmd_fifo:
+        processADCFIFOCmd(adcCmd.values.fifo);
+        break;
     default:
-        DiagQ_Log(DiagSource_MainApp, "\"adc\" subcmd value %d not recognized", adcCmd.subcmd);
+        ; // do nothing; logADCCmd() handles the error message;
     }
 }
 

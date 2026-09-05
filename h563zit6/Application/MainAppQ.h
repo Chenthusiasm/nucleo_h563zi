@@ -57,9 +57,17 @@ typedef struct {
 bool MainAppQ_Sleep_ms(uint32_t duration_ms);
 bool MainAppQ_UserButtonPressed(void);
 bool MainAppQ_UserButtonReleased(void);
-bool MainAppQ_ADCCmdScratchPad(uint8_t value);
+bool MainAppQ_ADCCmdScratchPad(uint8_t scratchpadValue);
 bool MainAppQ_ADCCmdCheckDefaults(void);
 bool MainAppQ_ADCCmdInfo(void);
+bool MainAppQ_ADCCmdFIFOInfo(void);
+bool MainAppQ_ADCCmdFIFOImmediate(void);
+bool MainAppQ_ADCCmdFIFOEvent(void);
+bool MainAppQ_ADCCmdFIFOAutoRead(void);
+bool MainAppQ_ADCCmdFIFOManualRead(void);
+bool MainAppQ_ADCCmdFIFOArm(uint16_t watermark);
+bool MainAppQ_ADCCmdFIFORearm(void);
+bool MainAppQ_ADCCmdFIFORead(void);
 
 
 #ifdef __cplusplus
