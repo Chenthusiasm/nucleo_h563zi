@@ -135,7 +135,7 @@ static void processADCCmd(ADCCmd_t const & adcCmd) {
     case ADCCmdSubcmd_checkdefaults:
         {
             int invalid = adcConfig.TestReadAll();
-            DiagQ_Log(DiagSource_MainApp, "AD408x::Config::TestReadAll()= %d", invalid);
+            DiagQ_Log(DiagSource_MainApp, "AD408x::Config::TestReadAll() = %d", invalid);
         }
         break;
     case ADCCmdSubcmd_info:

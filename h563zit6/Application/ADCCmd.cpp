@@ -375,21 +375,23 @@ static uint8_t handleCmd(int argc, char *argv[]) {
 /* External define -------------------------------------------------------------------------------*/
 
 char const* ADCCmdSubcmdNames[] = {
-    [ADCCmdSubcmd_scratchpad] = SUBCMD_SCRATCHPAD,
+    // this array initializer is not standard in C++17, it's part of the C99/GNU extension; possibly not portable
+    [ADCCmdSubcmd_scratchpad]    = SUBCMD_SCRATCHPAD,
     [ADCCmdSubcmd_checkdefaults] = SUBCMD_CHECKDEFAULTS,
-    [ADCCmdSubcmd_info] = SUBCMD_INFO,
-    [ADCCmdSubcmd_fifo] = SUBCMD_FIFO,
+    [ADCCmdSubcmd_info]          = SUBCMD_INFO,
+    [ADCCmdSubcmd_fifo]          = SUBCMD_FIFO,
 };
 
 char const* ADCCmdFIFOParameterNames[] = {
-    [ADCCmdFIFOParameter_info] = FIFO_PARAM_INFO,
-    [ADCCmdFIFOParameter_immediate] = FIFO_PARAM_IMMEDIATE,
-    [ADCCmdFIFOParameter_event] = FIFO_PARAM_EVENT,
-    [ADCCmdFIFOParameter_autoread] = FIFO_PARAM_AUTOREAD,
+    // this array initializer is not standard in C++17, it's part of the C99/GNU extension; possibly not portable
+    [ADCCmdFIFOParameter_info]       = FIFO_PARAM_INFO,
+    [ADCCmdFIFOParameter_immediate]  = FIFO_PARAM_IMMEDIATE,
+    [ADCCmdFIFOParameter_event]      = FIFO_PARAM_EVENT,
+    [ADCCmdFIFOParameter_autoread]   = FIFO_PARAM_AUTOREAD,
     [ADCCmdFIFOParameter_manualread] = FIFO_PARAM_MANUALREAD,
-    [ADCCmdFIFOParameter_arm] = FIFO_PARAM_ARM,
-    [ADCCmdFIFOParameter_rearm] = FIFO_PARAM_REARM,
-    [ADCCmdFIFOParameter_read] = FIFO_PARAM_READ,
+    [ADCCmdFIFOParameter_arm]        = FIFO_PARAM_ARM,
+    [ADCCmdFIFOParameter_rearm]      = FIFO_PARAM_REARM,
+    [ADCCmdFIFOParameter_read]       = FIFO_PARAM_READ,
 };
 
 /* External functions ----------------------------------------------------------------------------*/

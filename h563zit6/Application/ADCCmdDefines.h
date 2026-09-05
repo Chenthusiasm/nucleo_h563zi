@@ -46,7 +46,7 @@ typedef struct {
 } ADCCmdFIFOValues_t;
 
 typedef union {
-    uint8_t            scratchpadValue; // subcmd == ADCCmdSubcmd_info
+    uint8_t            scratchpadValue; // subcmd == ADCCmdSubcmd_scratchpad
     ADCCmdFIFOValues_t fifo;            // subcmd == ADCCmdSubcmd_fifo
 } ADCCmdValues_t;
 
