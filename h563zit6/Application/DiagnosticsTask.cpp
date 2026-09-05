@@ -69,6 +69,12 @@ void DiagnosticsTask_Start(void *argument) {
             if (osMessageQueueGet(DiagnosticsQHandle, &message, nullptr, 0) != osOK) {
                 break; // queue's empty, don't continue spinning
             }
+            if (!printedBatch) {
+                // the terminal is currently sitting at a bare prompt left over from the last command or the last batch
+                // of asynchronous log output; move to a new line before printing so log text doesn't run onto the same
+                // line as the prompt
+                NL1();
+            }
             printMessage(&message);
             printedBatch = true;
         }
