@@ -177,7 +177,7 @@ int _write(int file, char *data, int len){
  * @brief   Implement _write to support printf functionality.
  * @note    Based on the solution found here:
  *          https://github.com/alexeykosinov/Redirect-printf-to-USB-VCP-on-STM32H7-MCU
- * @param[in]   file    File handle.
+ * @param[in]   file    File handle (unused).
  * @param[in]   data    Buffer of data to write.
  * @param[in]   len     Number of data bytes to write.
  * @return  The number of data bytes written.
@@ -194,6 +194,16 @@ int _write(int file, char *data, int len){
         // @TODO: handle this error
         return 0;
     }
+
+    // USB_CDC_Transmit() only starts the transfer; it hands the USB stack a pointer directly into
+    // data rather than copying it, so data must not be reused (e.g. by the next buffered chunk of
+    // a long printf()) until the transfer this call just started has actually finished going out
+    // over the wire. Without this wait, stdio's internal output buffer gets overwritten mid-flight,
+    // corrupting whatever the USB peripheral is still transmitting from it. */
+    while (USB_CDC_IsTransmitBusy()) {
+        ; // do nothing; wait for the transfer we just started to complete
+    }
+
     return len;
 }
 #endif /* !CLI_ENABLE_USB */
@@ -629,7 +639,7 @@ uint8_t cli_help(int argc, char *argv[])
             if(strcmp(CLI_commands[i].pCmd, "") != 0){
                 printf("[%s]", CLI_commands[i].pCmd);NL1();
                 if (CLI_commands[i].pHelp) {
-                    printf(CLI_commands[i].pHelp);NL2();
+                    printf("%s", CLI_commands[i].pHelp);NL2();
                 }
             }
         }
@@ -638,7 +648,7 @@ uint8_t cli_help(int argc, char *argv[])
         for(size_t i = 0; i < MAX_COMMAND_NB; i++) {
             if(strcmp(CLI_commands[i].pCmd, argv[1]) == 0){
                 printf("[%s]", CLI_commands[i].pCmd);NL1();
-                printf(CLI_commands[i].pHelp);NL1();
+                printf("%s", CLI_commands[i].pHelp);NL1();
                 return EXIT_SUCCESS;
             }
         }
